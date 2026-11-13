@@ -492,6 +492,8 @@
   var $ = function (id) { return document.getElementById(id); };
   // Version and changelog. Add the newest version at the top when the code changes.
   var CHANGELOG = [
+    { v: '1.7.3', date: '2026-11-13', items: [
+      'The red "Google script is older" bar now shows only when the script is too old for the screen (older than 1.7.0), and it sits across the top of the page instead of in the side panel.' ] },
     { v: '1.7.2', date: '2026-11-13', items: [
       'Dashboard: new Office filter next to the period filter. It filters the whole dashboard (totals, charts, averages) and the PDF report to one office. The average elapsed days table moved under By nature of complaint.' ] },
     { v: '1.7.1', date: '2026-11-13', items: [
@@ -676,12 +678,15 @@
     $('overlays').innerHTML = ''; $('app').classList.add('hidden'); $('login').classList.remove('hidden');
     $('loginErr').textContent = msg || '';
   }
+  // The screen only needs a script that is at least this version. A newer or slightly older script is fine.
+  var NEED_SERVER = '1.7.0';
+  function verNum(v) { var p = String(v || '0').split('.'); return (+p[0] || 0) * 1000000 + (+p[1] || 0) * 1000 + (+p[2] || 0); }
   function versionCheck(sv) {
     var b = $('verWarn');
-    if (!b) { b = document.createElement('div'); b.id = 'verWarn'; b.setAttribute('role', 'alert'); b.style.cssText = 'background:#E06D58;color:#fff;padding:8px 14px;font-size:13px;text-align:center;position:sticky;top:0;z-index:50'; $('app').insertBefore(b, $('app').firstChild); }
-    var ok = sv === CHANGELOG[0].v;
+    if (!b) { b = document.createElement('div'); b.id = 'verWarn'; b.setAttribute('role', 'alert'); b.style.cssText = 'background:#E06D58;color:#fff;padding:8px 14px;font-size:13px;text-align:center;position:fixed;top:0;left:0;right:0;z-index:200'; document.body.appendChild(b); }
+    var ok = verNum(sv) >= verNum(NEED_SERVER);
     b.style.display = ok ? 'none' : '';
-    b.textContent = 'The Google script is ' + (sv ? 'version ' + sv : 'an older version') + ' but this screen is ' + CHANGELOG[0].v + '. Paste the new Code.gs in Apps Script and deploy a New version.';
+    b.textContent = 'The Google script is ' + (sv ? 'version ' + sv : 'an older version') + ' and this screen needs at least ' + NEED_SERVER + '. Paste the new Code.gs in Apps Script and deploy a New version.';
   }
   function load() {
     return api('getData', S.token).then(function (d) {
