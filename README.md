@@ -1,5 +1,5 @@
 # RFAs
 
-Short link to the DPWH8 PAIO RFAs Monitoring Tool: https://pais8.github.io/rfas
+DPWH8 PAIO RFAs Monitoring Tool: https://pais8.github.io/rfas
 
-This public repository holds only a page that forwards to the app. The code is in a separate private repository and the database stays in Google Sheets.
+This public repository holds only the screen (`index.html`). The server is a Google Apps Script web app and the database is a Google Sheet. Records and passwords are not stored here. Sign in with your own username and password.
