@@ -177,13 +177,6 @@
   .clog h3 { font-size: 15px; margin: 0 0 4px; } .clog h3 span { font-weight: 400; color: var(--muted); font-size: 13px; }
   .clog ul { margin: 0 0 16px; padding-left: 20px; } .clog li { margin: 3px 0; }
 
-  /* ---------- bulletin ---------- */
-  .board { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
-  .note { padding: 16px 18px; position: relative; border-top: 5px solid var(--sky); display: flex; flex-direction: column; gap: 8px; }
-  .note.pin { border-top-color: var(--coral); background: #FFFaf4; }
-  .note h3 { font-size: 16.5px; }
-  .note .msg { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; }
-  .note .meta { font-size: 12.5px; color: var(--muted); margin-top: auto; display: flex; justify-content: space-between; gap: 8px; align-items: center; flex-wrap: wrap; }
   .tag { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; background: #FDEBC4; color: #6B4706; }
   .tag.pin { background: #F8D5CD; color: #7E2415; }
 
@@ -308,8 +301,6 @@
       <button data-page="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Dashboard</button>
       <button data-page="records"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Masterfile</button>
       <button data-page="calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Calendar</button>
-      <button data-page="bulletin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg>Bulletin board</button>
-      <button data-page="requests" id="navRequests"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>Requests<span class="badge hidden" id="reqBadge"></span></button>
       <button data-page="new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>New RFA</button>
       <button data-page="users" id="navUsers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.4 3.2-5.5 6.5-5.5s5.900 2.100 6.500 5.500M16 4.800a3.500 3.500 0 0 1 0 6.400M18.500 14.800c1.700.800 2.800 2.600 3 5.200"/></svg>Users</button>
       <button data-page="trash" id="navTrash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>Trash<span class="badge hidden" id="trashBadge"></span></button>
@@ -382,13 +373,13 @@
     <!-- calendar -->
     <section id="p-calendar" class="hidden">
       <div class="ph">
-        <div><h1>Calendar</h1><p>Deadlines, RFAs received, holidays and bulletin events. Click a day to see its details.</p></div>
+        <div><h1>Calendar</h1><p>Deadlines, RFAs received, holidays and events. Click a day to see its details.</p></div>
         <div class="actions calnav">
           <button class="btn" id="calPrev" aria-label="Previous month">&lsaquo;</button>
           <h2 id="calTitle"></h2>
           <button class="btn" id="calNext" aria-label="Next month">&rsaquo;</button>
           <button class="btn" id="calToday">Today</button>
-          <button class="btn primary" id="btnHoliday">Add holiday</button>
+          <button class="btn primary" id="btnHoliday">Add Event/Holiday</button>
         </div>
       </div>
       <div class="card">
@@ -396,25 +387,7 @@
         <div class="calgrid" id="calGrid"></div>
       </div>
       <div class="legend"><span><i style="background:var(--sky-soft);border:1px solid var(--sky)"></i>Received</span><span><i style="background:#FDEBC4;border:1px solid var(--sun)"></i>Pending, due that day</span>
-        <span><i style="background:#F8D5CD;border:1px solid var(--coral)"></i>Pending, overdue</span><span><i style="background:var(--sun)"></i>Bulletin event</span><span><i style="background:#F7F1EA;border:1px solid var(--line)"></i>Weekend or holiday</span></div>
-    </section>
-
-    <!-- bulletin -->
-    <section id="p-bulletin" class="hidden">
-      <div class="ph">
-        <div><h1>Bulletin board</h1><p>Announcements and reminders for the PAIO team.</p></div>
-        <div class="actions"><button class="btn primary" id="btnPost">New post</button></div>
-      </div>
-      <div class="board" id="board"></div>
-      <div class="card empty hidden" id="boardEmpty">No posts yet. Use New post to add the first announcement.</div>
-    </section>
-
-    <!-- requests -->
-    <section id="p-requests" class="hidden">
-      <div class="ph"><div><h1>Requests</h1><p id="reqSub"></p></div></div>
-      <div class="card"><div class="tablewrap">
-        <table><thead><tr><th>Requested on</th><th>Request</th><th>Transaction no.</th><th>Requested by</th><th>Status</th><th></th></tr></thead><tbody id="reqBody"></tbody></table>
-      </div><div class="empty hidden" id="reqEmpty">No requests yet.</div></div>
+        <span><i style="background:#F8D5CD;border:1px solid var(--coral)"></i>Pending, overdue</span><span><i style="background:var(--sun)"></i>Event</span><span><i style="background:#F7F1EA;border:1px solid var(--line)"></i>Weekend or holiday</span></div>
     </section>
 
     <!-- trash -->
@@ -449,10 +422,10 @@
         <table><thead><tr><th>Username</th><th>Full name</th><th>Position</th><th>Role</th><th>Active</th><th>Last sign in</th><th></th></tr></thead><tbody id="userBody"></tbody></table>
       </div></div>
       <div class="card" style="margin-top:14px"><h2>What each role can do</h2><div class="body">
-        <table><thead><tr><th>Role</th><th>Add RFAs</th><th>Edit and delete RFAs</th><th>Approve requests, Trash, Activity log</th><th>Holidays</th><th>Manage users</th></tr></thead>
-        <tbody><tr><td>Administrator</td><td>Yes</td><td>Yes</td><td>No</td><td>Yes</td><td>Yes</td></tr>
-        <tr><td>Information Officer II</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No</td></tr>
-        <tr><td>Staff</td><td>Yes</td><td>Only after the Information Officer II allows the request</td><td>No</td><td>No</td><td>No</td></tr></tbody></table>
+        <table><thead><tr><th>Role</th><th>Add, edit and delete RFAs</th><th>Trash and Activity log</th><th>Holidays and events</th><th>Manage users</th></tr></thead>
+        <tbody><tr><td>Administrator</td><td>Yes</td><td>No</td><td>Yes</td><td>Yes</td></tr>
+        <tr><td>Information Officer II</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No</td></tr>
+        <tr><td>Staff</td><td>Yes</td><td>No</td><td>No</td><td>No</td></tr></tbody></table>
       </div></div>
     </section>
 
@@ -483,11 +456,17 @@
 (function () {
   'use strict';
   var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  var S = { token: null, user: null, lists: null, holidays: [], holidayList: [], records: [], bulletin: [], requests: [], trash: [], trashDays: 5, today: '', page: 'dashboard', pg: 0 };
+  var S = { token: null, user: null, lists: null, holidays: [], holidayList: [], records: [], trash: [], trashDays: 5, today: '', page: 'dashboard', pg: 0 };
   var PAGE_SIZE = 25;
   var $ = function (id) { return document.getElementById(id); };
   // Version and changelog. Add the newest version at the top when the code changes.
   var CHANGELOG = [
+    { v: '1.6.0', date: '2026-11-13', items: [
+      'Deadlines now count only Monday to Friday and skip holidays. Due Date and elapsed days are recomputed for every RFA (the Sheet columns are now named "(computed)"). The old values are kept in a backup tab in the Sheet.',
+      'The calendar button is now "Add Event/Holiday". A holiday is skipped when counting days; an event only shows on the calendar and does not move any deadline. Both can be edited or deleted from the day\'s pop-up.',
+      'The edit and delete approval feature was removed. Staff can edit RFAs directly, and a deleted RFA still goes to the Trash for 5 days.',
+      'The bulletin board was removed.',
+      'The Activity log is kept. Changes typed straight into the Sheet are now logged too, with the date and time (and the Google account when Google provides it).' ] },
     { v: '1.5.0', date: '2026-11-13', items: [
       'Staff can add and update RFAs by typing straight into the MASTERFILE tab of the Google Sheet. The Sheet fills in the Month, No. of Days, Due Date and elapsed days by itself, and the app shows those rows with the same numbers. The app reloads on its own within a minute after someone edits the Sheet.',
       'Passwords are no longer kept in the Sheet, because staff can open it. They are kept in the script itself.' ] },
@@ -563,8 +542,12 @@
     if (what === 'direct' || what === 'holidays') return role === 'Administrator' || role === 'Information Officer II';
     return true;
   }
-  function setHolidays(list) { S.holidayList = list || []; S.holidays = S.holidayList.map(function (h) { return h.date; }); }
-  function holidayOn(k) { return S.holidayList.filter(function (h) { return h.date === k; })[0] || null; }
+  function setHolidays(list) {
+    S.holidayList = list || [];
+    S.holidays = S.holidayList.filter(function (h) { return h.type !== 'Event'; }).map(function (h) { return h.date; });   // only holidays skip working days
+  }
+  function holidayOn(k) { return S.holidayList.filter(function (h) { return h.date === k && h.type !== 'Event'; })[0] || null; }
+  function eventsOn(k) { return S.holidayList.filter(function (h) { return h.date === k && h.type === 'Event'; }); }
   function accountLabel() {
     var n = String(S.user.name || '').trim();
     if (!n || n === S.user.role) return (n || 'My') + "'s Account";
@@ -573,11 +556,6 @@
     return first + "'s Account";
   }
   function onTime(r) { return !isPending(r) && r.elapsed !== '' && !isNaN(Number(r.elapsed)) && Number(r.elapsed) <= 0; }
-  function myRequest(type, txn, statuses) {
-    return S.requests.filter(function (q) { return q.type === type && q.username === S.user.username &&
-      String(q.txn).toLowerCase() === String(txn).toLowerCase() && statuses.indexOf(q.status) >= 0; })[0] || null;
-  }
-
   /* ------------------------------ server calls ------------------------------ */
   var pending = 0;
   // The app runs in two places. Inside Google (the Apps Script link) it calls the server with google.script.run.
@@ -645,20 +623,19 @@
   }
   function load() {
     return api('getData', S.token).then(function (d) {
-      S.user = d.user; S.lists = d.lists; setHolidays(d.holidays); S.records = d.records || []; S.bulletin = d.bulletin || []; S.today = d.today;
-      S.requests = d.requests || []; S.trash = d.trash || []; S.trashDays = d.trashDays || 5;
+      S.user = d.user; S.lists = d.lists; setHolidays(d.holidays); S.records = d.records || []; S.today = d.today;
+      S.trash = d.trash || []; S.trashDays = d.trashDays || 5;
       $('login').classList.add('hidden'); $('app').classList.remove('hidden');
       $('meName').textContent = S.user.name; $('meRole').textContent = S.user.position || S.user.role;
       $('navUsers').classList.toggle('hidden', !can('users'));
       $('navTrash').classList.toggle('hidden', !can('io2')); $('navLog').classList.toggle('hidden', !can('io2'));
-      $('navRequests').classList.toggle('hidden', S.user.role === 'Administrator');
       $('btnHoliday').classList.toggle('hidden', !can('holidays'));
       $('accTitle').textContent = accountLabel(); $('btnMe').title = 'Open ' + accountLabel();
       $('accProfile').innerHTML = [['Name', S.user.name], ['Position', S.user.position || '-'], ['Role', S.user.role], ['Username', S.user.username]]
         .map(function (x) { return '<dt>' + x[0] + '</dt><dd>' + esc(x[1]) + '</dd>'; }).join('');
-      var ok = { users: can('users'), trash: can('io2'), log: can('io2'), requests: S.user.role !== 'Administrator' };
+      var ok = { users: can('users'), trash: can('io2'), log: can('io2') };
       fillFilters(); badges(); go(ok[S.page] === false ? 'dashboard' : S.page);
-      if (S.user.mustChange) forcePassword(); else promptRequests();
+      if (S.user.mustChange) forcePassword();
       startPolling();
     });
   }
@@ -667,15 +644,13 @@
   function go(page) {
     if (page === 'new') { openForm(null); return; }
     S.page = page;
-    ['dashboard', 'records', 'calendar', 'bulletin', 'requests', 'trash', 'log', 'users', 'account'].forEach(function (p) { $('p-' + p).classList.toggle('hidden', p !== page); });
+    ['dashboard', 'records', 'calendar', 'trash', 'log', 'users', 'account'].forEach(function (p) { $('p-' + p).classList.toggle('hidden', p !== page); });
     Array.prototype.forEach.call(document.querySelectorAll('#nav button'), function (b) { b.classList.toggle('on', b.dataset.page === page); });
     $('btnMe').classList.toggle('on', page === 'account');
     if (page === 'dashboard') renderDashboard();
     if (page === 'records') renderRecords();
     if (page === 'users') loadUsers();
     if (page === 'calendar') renderCalendar();
-    if (page === 'bulletin') renderBoard();
-    if (page === 'requests') renderRequests();
     if (page === 'trash') renderTrash();
     if (page === 'log') loadLog();
     window.scrollTo(0, 0);
@@ -864,42 +839,16 @@
       row('Action taken', r.action) + row('Other remarks', r.remarks) + row('With extension', r.extension) +
       row('Due date / deadline', fmtDate(r.dueDate)) + row('Date submitted', fmtDate(r.dateSubmitted)) + row('Elapsed days', el) +
       row('Encoded by', encoder(r)) + row('Last updated', r.updated) +
-      '</dl>' + requestNote(r) + '</div><footer><button class="btn danger" data-del>Delete</button>' +
+      '</dl></div><footer><button class="btn danger" data-del>Delete</button>' +
       '<button class="btn" data-close>Close</button><button class="btn primary" data-edit>Edit</button></footer>');
-    o.el.querySelector('[data-edit]').addEventListener('click', function () {
-      if (can('direct') || myRequest('Edit', r.txn, ['Allowed'])) { o.close(); openForm(r); return; }
-      if (myRequest('Edit', r.txn, ['Pending'])) { toast('Your edit request is still waiting for the Information Officer II.'); return; }
-      confirmBox('Are you sure you want to edit this RFA?', 'Editing transaction ' + r.txn + ' needs the approval of the Information Officer II. A request will be sent, and you can edit once it is allowed.', 'Yes, send request', true).then(function (yes) {
-        if (yes) sendRequest('Edit', r, o);
-      });
-    });
+    o.el.querySelector('[data-edit]').addEventListener('click', function () { o.close(); openForm(r); });
     o.el.querySelector('[data-del]').addEventListener('click', function () {
-      if (can('direct')) {
-        confirmBox('Are you sure you want to delete this RFA?', 'Transaction ' + r.txn + ' will be moved to the Trash. The Information Officer II can restore it within ' + S.trashDays + ' days. After that it is erased for good.', 'Yes, delete').then(function (yes) {
-          if (!yes) return;
-          api('deleteRecord', S.token, r.txn).then(function (res) { S.records = res.records; if (res.trash) S.trash = res.trash; o.close(); fillFilters(); badges(); go(S.page); toast('RFA moved to the Trash.'); })
-            .catch(function (e) { toast(e.message); });
-        });
-        return;
-      }
-      if (myRequest('Delete', r.txn, ['Pending'])) { toast('Your delete request is still waiting for the Information Officer II.'); return; }
-      confirmBox('Are you sure you want to delete this RFA?', 'Deleting transaction ' + r.txn + ' needs the approval of the Information Officer II. A request will be sent. If it is allowed, the RFA is moved to the Trash.', 'Yes, send request').then(function (yes) {
-        if (yes) sendRequest('Delete', r, o);
+      confirmBox('Are you sure you want to delete this RFA?', 'Transaction ' + r.txn + ' will be moved to the Trash. The Information Officer II can restore it within ' + S.trashDays + ' days. After that it is erased for good.', 'Yes, delete').then(function (yes) {
+        if (!yes) return;
+        api('deleteRecord', S.token, r.txn).then(function (res) { S.records = res.records; if (res.trash) S.trash = res.trash; o.close(); fillFilters(); badges(); go(S.page); toast('RFA moved to the Trash.'); })
+          .catch(function (e) { toast(e.message); });
       });
     });
-  }
-  function requestNote(r) {
-    if (can('direct')) return '';
-    var a = myRequest('Edit', r.txn, ['Allowed']), p = myRequest('Edit', r.txn, ['Pending']), d = myRequest('Delete', r.txn, ['Pending']);
-    return (a ? '<p class="notice ok">Your edit request was allowed by ' + esc(a.decidedBy) + '. You can edit this RFA once.</p>' : '') +
-      (p ? '<p class="notice">Your edit request is waiting for the Information Officer II.</p>' : '') +
-      (d ? '<p class="notice">Your delete request is waiting for the Information Officer II.</p>' : '');
-  }
-  function sendRequest(type, r, o) {
-    api('requestChange', S.token, type, r.txn).then(function (res) {
-      S.requests = res.requests; badges(); o.close(); if (S.page === 'requests') renderRequests();
-      toast('Request sent to the Information Officer II.');
-    }).catch(function (e) { toast(e.message); });
   }
 
   function openForm(r) {
@@ -983,7 +932,7 @@
       if (rec.status.toLowerCase().indexOf('closed') >= 0 && !rec.dateSubmitted) { g('rfErr').textContent = 'Please enter the date submitted before closing this RFA.'; o.el.scrollTop = 0; return; }
       g('rfSave').disabled = true; g('rfSave').textContent = 'Saving...';
       api('saveRecord', S.token, rec).then(function (res) {
-        S.records = res.records; if (res.requests) S.requests = res.requests; o.close(); fillFilters(); badges();
+        S.records = res.records; o.close(); fillFilters(); badges();
         if (S.page === 'dashboard' || S.page === 'calendar') go(S.page); else go('records');
         toast(isNew ? 'RFA saved. Encoded by ' + S.user.name + '.' : 'Changes saved.');
       }).catch(function (e) { g('rfErr').textContent = e.message; o.el.scrollTop = 0; g('rfSave').disabled = false; g('rfSave').textContent = isNew ? 'Save RFA' : 'Save changes'; });
@@ -1006,11 +955,11 @@
     var first = new Date(CAL.y, CAL.m, 1), start = new Date(CAL.y, CAL.m, 1 - first.getDay());
     var weeks = Math.ceil((first.getDay() + new Date(CAL.y, CAL.m + 1, 0).getDate()) / 7);
     var rec = {}, due = {}, ev = {};
+    S.holidayList.forEach(function (h) { if (h.type === 'Event') (ev[h.date] = ev[h.date] || []).push(h); });
     S.records.forEach(function (r) {
       if (r.dateReceived) rec[r.dateReceived] = (rec[r.dateReceived] || 0) + 1;
       if (isPending(r) && r.dueDate) (due[r.dueDate] = due[r.dueDate] || []).push(r);
     });
-    S.bulletin.forEach(function (p) { if (p.eventDate) (ev[p.eventDate] = ev[p.eventDate] || []).push(p); });
     var html = '';
     for (var i = 0; i < weeks * 7; i++) {
       var d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i), k = ymd(d);
@@ -1037,24 +986,31 @@
         return '<tr tabindex="0" data-row="' + r.row + '"><td>' + esc(r.txn) + '<div class="hint">' + esc(r.sender) + '</div></td><td>' + esc(r.office) + '</td><td>' + statusPill(r) + '</td></tr>';
       }).join('') + '</tbody></table></div>';
     };
-    var evs = S.bulletin.filter(function (p) { return p.eventDate === k; });
-    var hd = holidayOn(k);
-    var body = evs.map(function (p) { return '<p style="margin:0 0 10px"><span class="tag">Event</span> <b>' + esc(p.title) + '</b><br><span class="hint">' + esc(p.message) + '</span></p>'; }).join('') +
-      (hd ? '<p style="margin:0 0 10px"><span class="tag pin">' + 'Holiday</span> <b>' + esc(hd.title) + '</b><br><span class="hint">Not counted as a working day.' + (hd.notes ? ' ' + esc(hd.notes) : '') + '</span>' +
-        (can('holidays') ? '<br><button class="btn small" data-hedit style="margin-top:6px">Edit holiday</button> <button class="btn small danger" data-hdel style="margin-top:6px">Delete holiday</button>' : '') + '</p>' : '') +
+    var hd = holidayOn(k), evs = eventsOn(k);
+    var entry = function (h, tag, tagCls, note) {
+      return '<p style="margin:0 0 10px"><span class="tag ' + tagCls + '">' + tag + '</span> <b>' + esc(h.title) + '</b><br><span class="hint">' + note + (h.notes ? ' ' + esc(h.notes) : '') + '</span>' +
+        (can('holidays') ? '<br><button class="btn small" data-hedit="' + h.row + '" style="margin-top:6px">Edit</button> <button class="btn small danger" data-hdel="' + h.row + '" style="margin-top:6px">Delete</button>' : '') + '</p>';
+    };
+    var body = (hd ? entry(hd, 'Holiday', 'pin', 'Not counted as a working day.') : '') + evs.map(function (h) { return entry(h, 'Event', '', 'Does not change any deadline.'); }).join('') +
       list('Pending and due this day', S.records.filter(function (r) { return isPending(r) && r.dueDate === k; })) +
       list('Received this day', S.records.filter(function (r) { return r.dateReceived === k; })) +
       list('Reply submitted this day', S.records.filter(function (r) { return r.dateSubmitted === k; }));
     var o = overlay('<header><h2>' + esc(fmtDate(k)) + '</h2><button class="x" data-close aria-label="Close">&times;</button></header><div class="mbody">' +
       (body || '<p class="hint" style="margin:0 0 12px">Nothing recorded on this day.</p>') + '</div><footer>' +
-      (can('holidays') && !hd ? '<button class="btn" data-hadd>Mark as holiday</button>' : '') + '<button class="btn" data-close>Close</button></footer>');
-    var hb = o.el.querySelector('[data-hadd]'), he = o.el.querySelector('[data-hedit]'), hx = o.el.querySelector('[data-hdel]');
+      (can('holidays') ? '<button class="btn" data-hadd>Add Event/Holiday</button>' : '') + '<button class="btn" data-close>Close</button></footer>');
+    var hb = o.el.querySelector('[data-hadd]');
     if (hb) hb.addEventListener('click', function () { o.close(); holidayForm({ date: k }); });
-    if (he) he.addEventListener('click', function () { o.close(); holidayForm(hd); });
-    if (hx) hx.addEventListener('click', function () {
-      confirmBox('Delete this holiday?', hd.title + ' on ' + fmtDate(k) + ' will count as a working day again, and the deadlines of pending RFAs will be recomputed.', 'Delete').then(function (yes) {
-        if (!yes) return;
-        api('deleteHoliday', S.token, k).then(function (res) { afterHoliday(res, 'Holiday deleted.'); o.close(); }).catch(function (e) { toast(e.message); });
+    Array.prototype.forEach.call(o.el.querySelectorAll('[data-hedit]'), function (b) {
+      b.addEventListener('click', function () { var h = S.holidayList.filter(function (x) { return String(x.row) === b.dataset.hedit; })[0]; if (h) { o.close(); holidayForm(h); } });
+    });
+    Array.prototype.forEach.call(o.el.querySelectorAll('[data-hdel]'), function (b) {
+      b.addEventListener('click', function () {
+        var h = S.holidayList.filter(function (x) { return String(x.row) === b.dataset.hdel; })[0]; if (!h) return;
+        var isEv = h.type === 'Event';
+        confirmBox(isEv ? 'Delete this event?' : 'Delete this holiday?', isEv ? h.title + ' on ' + fmtDate(h.date) + ' will be removed from the calendar.' : h.title + ' on ' + fmtDate(h.date) + ' will count as a working day again, and the deadlines of pending RFAs will be recomputed.', 'Delete').then(function (yes) {
+          if (!yes) return;
+          api('deleteHoliday', S.token, h.row).then(function (res) { afterHoliday(res, isEv ? 'Event deleted.' : 'Holiday deleted.'); o.close(); }).catch(function (e) { toast(e.message); });
+        });
       });
     });
     var open = function (e2) {
@@ -1073,84 +1029,29 @@
   $('btnHoliday').addEventListener('click', function () { holidayForm(null); });
   function holidayForm(h) {
     var isNew = !h || !h.title; h = h || {};
-    var o = overlay('<form id="hForm"><header><h2>' + (isNew ? 'Add holiday' : 'Edit holiday') + '</h2><button type="button" class="x" data-close aria-label="Close">&times;</button></header><div class="mbody">' +
+    var isEv = h.type === 'Event';
+    var o = overlay('<form id="hForm"><header><h2>' + (isNew ? 'Add Event/Holiday' : 'Edit ' + (isEv ? 'event' : 'holiday')) + '</h2><button type="button" class="x" data-close aria-label="Close">&times;</button></header><div class="mbody">' +
       '<p class="err" id="hErr" role="alert"></p>' +
       '<label class="f">Date<input class="in" id="hDate" type="date" value="' + esc(h.date || '') + '" required></label>' +
-      '<label class="f">Title of the holiday<input class="in" id="hTitle" maxlength="100" value="' + esc(h.title || '') + '" placeholder="e.g. Leyte Gulf Landings Anniversary" required></label>' +
+      '<label class="f">Is it a holiday or an event?<select class="in" id="hType"><option value="Holiday"' + (isEv ? '' : ' selected') + '>Holiday (not counted as a working day)</option><option value="Event"' + (isEv ? ' selected' : '') + '>Event (does not change any deadline)</option></select></label>' +
+      '<label class="f">Title<input class="in" id="hTitle" maxlength="100" value="' + esc(h.title || '') + '" placeholder="e.g. Leyte Gulf Landings Anniversary or PAIO staff meeting" required></label>' +
       '<label class="f">Notes <span class="opt">(optional: memo, proclamation or EO number)</span><textarea class="in" id="hNotes" rows="3">' + esc(h.notes || '') + '</textarea></label>' +
-      '<p class="hint" style="margin:0 0 10px">A holiday is not counted as a working day. Deadlines of pending RFAs are recomputed when you save.</p>' +
-      '</div><footer><button type="button" class="btn" data-close>Cancel</button><button class="btn primary" id="hSave">Save holiday</button></footer></form>', true);
+      '<p class="hint" style="margin:0 0 10px">A holiday is skipped when counting working days, and the deadlines of pending RFAs are recomputed when you save. An event only shows on the calendar.</p>' +
+      '</div><footer><button type="button" class="btn" data-close>Cancel</button><button class="btn primary" id="hSave">Save</button></footer></form>', true);
     var g = function (id) { return o.el.querySelector('#' + id); };
     g('hForm').addEventListener('submit', function (ev) {
       ev.preventDefault(); g('hSave').disabled = true;
-      api('saveHoliday', S.token, { date: g('hDate').value, title: g('hTitle').value, notes: g('hNotes').value, originalDate: isNew ? '' : h.date })
-        .then(function (res) { o.close(); afterHoliday(res, 'Holiday saved.'); })
+      api('saveHoliday', S.token, { date: g('hDate').value, title: g('hTitle').value, type: g('hType').value, notes: g('hNotes').value, row: isNew ? 0 : h.row })
+        .then(function (res) { o.close(); afterHoliday(res, g('hType').value === 'Event' ? 'Event saved.' : 'Holiday saved.'); })
         .catch(function (e) { g('hErr').textContent = e.message; g('hSave').disabled = false; });
     });
   }
 
-  /* ------------------------- requests, trash, activity log -------------------- */
+  /* ------------------------------- trash, activity log ------------------- */
   function badges() {
-    var n = can('io2') ? S.requests.filter(function (q) { return q.status === 'Pending'; }).length
-      : S.requests.filter(function (q) { return q.status === 'Allowed'; }).length;
-    $('reqBadge').textContent = n; $('reqBadge').classList.toggle('hidden', !n);
     $('trashBadge').textContent = S.trash.length; $('trashBadge').classList.toggle('hidden', !S.trash.length);
   }
-  function reqPill(q) {
-    var c = q.status === 'Pending' ? 'st-pending' : q.status === 'Not allowed' ? 'st-not' : 'st-allowed';
-    var label = q.status === 'Pending' ? 'Waiting' : q.status === 'Done' ? 'Allowed, moved to Trash' : q.status === 'Used' ? 'Allowed, edit done' : q.status;
-    return '<span class="pill ' + c + '">' + esc(label) + '</span>' + (q.decidedBy ? '<div class="hint">' + esc(q.decidedBy) + ', ' + esc(fmtDate(q.decidedOn)) + '</div>' : '');
-  }
-  function renderRequests() {
-    var io = can('io2');
-    $('reqSub').textContent = io ? 'Staff requests to edit or delete an RFA. Allow or do not allow each one.' : 'Your requests to edit or delete an RFA, and what the Information Officer II decided.';
-    var list = S.requests.slice().sort(function (a, b) { return (b.status === 'Pending') - (a.status === 'Pending') || String(b.requestedOn).localeCompare(String(a.requestedOn)); });
-    $('reqEmpty').classList.toggle('hidden', list.length > 0);
-    $('reqBody').innerHTML = list.map(function (q) {
-      var act = '';
-      if (io && q.status === 'Pending') act = '<button class="btn small primary" data-allow="' + esc(q.id) + '">Allow</button> <button class="btn small danger" data-deny="' + esc(q.id) + '">Do not allow</button>';
-      if (!io && q.type === 'Edit' && q.status === 'Allowed') act = '<button class="btn small primary" data-editnow="' + esc(q.txn) + '">Edit now</button>';
-      return '<tr><td class="nowrap">' + esc(fmtDate(q.requestedOn)) + '<div class="hint">' + esc(String(q.requestedOn).slice(11)) + '</div></td><td><b>' + esc(q.type) + '</b></td><td><a href="#" data-view="' + esc(q.txn) + '">' + esc(q.txn) + '</a></td><td>' +
-        esc(q.requestedBy) + '</td><td>' + reqPill(q) + '</td><td style="text-align:right" class="nowrap">' + act + '</td></tr>';
-    }).join('');
-  }
   function byTxn(txn) { return S.records.filter(function (r) { return String(r.txn).toLowerCase() === String(txn).toLowerCase(); })[0]; }
-  function decide(id, allow) {
-    return api('decideRequest', S.token, id, allow).then(function (res) {
-      S.requests = res.requests; S.records = res.records; S.trash = res.trash || S.trash; fillFilters(); badges();
-      if (S.page === 'requests') renderRequests(); else if (S.page !== 'log') go(S.page);
-      toast(allow ? 'Request allowed.' : 'Request not allowed.');
-    }).catch(function (e) { toast(e.message); });
-  }
-  $('reqBody').addEventListener('click', function (ev) {
-    var a = ev.target.closest('[data-allow]'), d = ev.target.closest('[data-deny]'), e = ev.target.closest('[data-editnow]'), v = ev.target.closest('[data-view]');
-    if (a) decide(a.dataset.allow, true);
-    if (d) decide(d.dataset.deny, false);
-    if (e || v) {
-      ev.preventDefault();
-      var r = byTxn((e || v).dataset.editnow || (e || v).dataset.view);
-      if (!r) { toast('This RFA is no longer in the masterfile.'); return; }
-      if (e) openForm(r); else openDetail(r);
-    }
-  });
-  // The Information Officer II is asked about each new request as soon as it shows up.
-  var PROMPTED = {};
-  function promptRequests() {
-    if (!S.user || !can('io2') || document.querySelector('#overlays .overlay')) return;
-    var q = S.requests.filter(function (x) { return x.status === 'Pending' && !PROMPTED[x.id]; }).pop();
-    if (!q) return;
-    PROMPTED[q.id] = 1;
-    var r = byTxn(q.txn);
-    var o = overlay('<header><h2>Request to ' + esc(q.type.toLowerCase()) + ' an RFA</h2></header><div class="mbody">' +
-      '<p style="margin:0 0 10px"><b>' + esc(q.requestedBy) + '</b> is asking to <b>' + esc(q.type.toLowerCase()) + '</b> transaction <b>' + esc(q.txn) + '</b>.</p>' +
-      (r ? '<dl class="detail"><dt>Sender</dt><dd>' + esc(r.sender) + '</dd><dt>Office</dt><dd>' + esc(r.office) + '</dd><dt>Nature</dt><dd>' + esc(r.nature) + '</dd><dt>Status</dt><dd>' + esc(r.status) + '</dd></dl>' : '') +
-      '<p class="hint" style="margin:0 0 10px">' + (q.type === 'Delete' ? 'If you allow it, the RFA is moved to the Trash, where you can restore it within ' + S.trashDays + ' days.' : 'If you allow it, ' + esc(q.requestedBy) + ' can edit this RFA once.') + '</p>' +
-      '</div><footer><button class="btn" data-later>Decide later</button><button class="btn danger" data-no>Do not allow</button><button class="btn primary" data-yes>Allow</button></footer>', true, true);
-    var next = function () { o.close(); setTimeout(promptRequests, 150); };
-    o.el.querySelector('[data-later]').addEventListener('click', next);
-    o.el.querySelector('[data-no]').addEventListener('click', function () { decide(q.id, false).then(next); });
-    o.el.querySelector('[data-yes]').addEventListener('click', function () { decide(q.id, true).then(next); });
-  }
   var pollTimer = null;
   function stopPolling() { if (pollTimer) clearInterval(pollTimer); pollTimer = null; }
   function startPolling() {
@@ -1163,13 +1064,7 @@
         // Someone typed into the Google Sheet directly: load the records again.
         if (S.rev !== null && res.rev !== S.rev && !document.querySelector('#overlays .overlay')) { S.rev = res.rev; load(); return; }
         if (S.rev === null || !document.querySelector('#overlays .overlay')) S.rev = res.rev;
-        var before = {}; S.requests.forEach(function (q) { before[q.id] = q.status; });
-        S.requests = res.requests || [];
-        if (S.user.role !== 'Administrator' && !can('io2')) S.requests.forEach(function (q) {
-          if (before[q.id] === 'Pending' && q.status !== 'Pending') toast('Your request to ' + q.type.toLowerCase() + ' ' + q.txn + ' was ' + (q.status === 'Not allowed' ? 'not allowed.' : 'allowed.'));
-        });
-        badges(); if (S.page === 'requests') renderRequests();
-        promptRequests();
+        badges();
       });
     }, 60000);
   }
@@ -1242,46 +1137,6 @@
     window.addEventListener('afterprint', done);
     quiet('logAction', S.token, 'Exported report', period);
     setTimeout(function () { window.print(); }, 250);
-  }
-
-  /* ------------------------------- bulletin board ---------------------------- */
-  function manager() { return S.user.role === 'Administrator' || S.user.role === 'Information Officer II'; }
-  function renderBoard() {
-    var posts = S.bulletin.slice().sort(function (a, b) { return (b.pinned - a.pinned) || String(b.postedOn).localeCompare(String(a.postedOn)); });
-    $('boardEmpty').classList.toggle('hidden', posts.length > 0);
-    $('board').innerHTML = posts.map(function (p) {
-      var mine = manager() || p.username === S.user.username;
-      return '<article class="card note' + (p.pinned ? ' pin' : '') + '"><div>' + (p.pinned ? '<span class="tag pin">Pinned</span> ' : '') +
-        (p.eventDate ? '<span class="tag">Event: ' + esc(fmtDate(p.eventDate)) + '</span>' : '') + '</div><h3>' + esc(p.title) + '</h3><div class="msg">' + esc(p.message) + '</div>' +
-        '<div class="meta"><span>Posted by ' + esc(p.postedBy) + '<br>' + esc(fmtDate(p.postedOn)) + '</span>' +
-        (mine ? '<span><button class="btn small" data-post="' + esc(p.id) + '">Edit</button> <button class="btn small danger" data-delpost="' + esc(p.id) + '">Delete</button></span>' : '') + '</div></article>';
-    }).join('');
-  }
-  $('btnPost').addEventListener('click', function () { postForm(null); });
-  $('board').addEventListener('click', function (ev) {
-    var e = ev.target.closest('[data-post]'), d = ev.target.closest('[data-delpost]');
-    if (e) postForm(S.bulletin.filter(function (p) { return p.id === e.dataset.post; })[0]);
-    if (d) confirmBox('Delete this post?', 'It will be removed from the bulletin board for everyone.', 'Delete').then(function (yes) {
-      if (yes) api('deleteBulletin', S.token, d.dataset.delpost).then(function (list) { S.bulletin = list; renderBoard(); toast('Post deleted.'); }).catch(function (x) { toast(x.message); });
-    });
-  });
-  function postForm(p) {
-    var isNew = !p; p = p || { title: '', message: '', eventDate: '', pinned: false };
-    var o = overlay('<form id="bForm"><header><h2>' + (isNew ? 'New post' : 'Edit post') + '</h2><button type="button" class="x" data-close aria-label="Close">&times;</button></header><div class="mbody">' +
-      '<p class="err" id="bErr" role="alert"></p>' +
-      '<label class="f">Title<input class="in" id="bTitle" value="' + esc(p.title) + '" maxlength="120" required></label>' +
-      '<label class="f">Message<textarea class="in" id="bMsg" rows="5">' + esc(p.message) + '</textarea></label>' +
-      '<label class="f">Event date <span class="opt">(optional, shows on the calendar)</span><input class="in" id="bDate" type="date" value="' + esc(p.eventDate) + '"></label>' +
-      (manager() ? '<label class="f" style="display:flex;gap:8px;align-items:center;font-weight:400"><input type="checkbox" id="bPin" ' + (p.pinned ? 'checked' : '') + '> Pin to the top of the board</label>' : '') +
-      '<p class="hint" style="margin:0 0 10px">Posted by ' + esc(isNew ? S.user.name : p.postedBy) + '</p>' +
-      '</div><footer><button type="button" class="btn" data-close>Cancel</button><button class="btn primary" id="bSave">' + (isNew ? 'Post' : 'Save') + '</button></footer></form>', true);
-    var g = function (id) { return o.el.querySelector('#' + id); };
-    g('bForm').addEventListener('submit', function (ev) {
-      ev.preventDefault(); g('bSave').disabled = true;
-      api('saveBulletin', S.token, { id: isNew ? '' : p.id, title: g('bTitle').value, message: g('bMsg').value, eventDate: g('bDate').value, pinned: g('bPin') ? g('bPin').checked : p.pinned })
-        .then(function (list) { S.bulletin = list; o.close(); renderBoard(); toast(isNew ? 'Posted to the bulletin board.' : 'Post saved.'); })
-        .catch(function (e) { g('bErr').textContent = e.message; g('bSave').disabled = false; });
-    });
   }
 
   /* ----------------------------------- users --------------------------------- */
