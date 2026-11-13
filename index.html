@@ -461,6 +461,8 @@
   var $ = function (id) { return document.getElementById(id); };
   // Version and changelog. Add the newest version at the top when the code changes.
   var CHANGELOG = [
+    { v: '1.6.1', date: '2026-11-13', items: [
+      'Setup helper for the Google Sheet: run once in Apps Script to give permission and set up the dropdowns, locked computed columns and working-day deadlines.' ] },
     { v: '1.6.0', date: '2026-11-13', items: [
       'Deadlines now count only Monday to Friday and skip holidays. Due Date and elapsed days are recomputed for every RFA (the Sheet columns are now named "(computed)"). The old values are kept in a backup tab in the Sheet.',
       'The calendar button is now "Add Event/Holiday". A holiday is skipped when counting days; an event only shows on the calendar and does not move any deadline. Both can be edited or deleted from the day\'s pop-up.',
