@@ -114,7 +114,8 @@
   .dcols { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 14px; margin-bottom: 14px; align-items: start; }
   .dcol { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
   .avg td, .avg th { text-align: right; white-space: nowrap; }
-  .avg.om td, .avg.om th { padding: 9px 8px; font-size: 13px; } .avg.om td:first-child, .avg.om th:first-child { white-space: normal; min-width: 120px; padding-left: 14px; } .avg td:first-child, .avg th:first-child { text-align: left; }
+  .sortb { all: unset; cursor: pointer; font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit; white-space: nowrap; } .sortb:hover, .sortb.on { color: var(--dusk, #2F4A6D); text-decoration: underline; } .sortb:focus-visible { outline: 2px solid var(--orange, #FC9E54); outline-offset: 2px; }
+  .avg.om { table-layout: auto; width: 100%; } .avg.om td, .avg.om th { padding: 9px 6px; font-size: 12.5px; } .avg.om td:first-child, .avg.om th:first-child { white-space: normal; min-width: 120px; padding-left: 14px; } .avg td:first-child, .avg th:first-child { text-align: left; }
   .legend { display: flex; gap: 14px; font-size: 12.5px; color: var(--muted); margin-top: 8px; flex-wrap: wrap; }
   .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; }
   .cols { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 6px; align-items: end; height: 190px; padding-top: 18px; }
@@ -494,6 +495,8 @@
   var $ = function (id) { return document.getElementById(id); };
   // Version and changelog. Add the newest version at the top when the code changes.
   var CHANGELOG = [
+    { v: '1.7.5', date: '2026-11-13', items: [
+      'The By office averaging table can be ranked: click Simple, Complex, Technical or All to sort the offices by that column (best average first, click again to reverse). A rank number was added and the "By office" heading above the table was removed.' ] },
     { v: '1.7.4', date: '2026-11-13', items: [
       'The DPWH logo is now the icon of the web app (browser tab, bookmarks and the home-screen shortcut).' ] },
     { v: '1.7.3', date: '2026-11-13', items: [
@@ -770,7 +773,8 @@
   }
   function f1(v) { return v === null ? '-' : (Math.round(v * 10) / 10).toFixed(1); }
   // Office by classification: the average elapsed days of RFAs answered on time, best (most days early) first. Used for awarding.
-  function officeMatrix(rows) {
+  var omSort = { col: 'all', dir: 1 };   // dir 1: best (most days early) first, -1: the other way
+  function officeMatrix(rows, forPrint) {
     var names = (S.lists.classes || []).map(function (c) { return c.name; });
     var offs = [];
     rows.forEach(function (r) { var o = String(r.office || '').trim() || 'Not specified'; if (offs.indexOf(o) < 0) offs.push(o); });
@@ -778,10 +782,21 @@
     var list = offs.map(function (o) {
       var mine = rows.filter(function (r) { return (String(r.office || '').trim() || 'Not specified') === o; });
       return { o: o, all: avgOf(mine), by: names.map(function (nm) { return avgOf(mine.filter(function (r) { return r.classification === nm; })); }) };
-    }).filter(function (x) { return x.all.n; }).sort(function (a, b) { return a.all.avg - b.all.avg; });
-    return '<table class="avg om"><thead><tr><th>Office</th>' + names.map(function (n) { return '<th>' + esc(n) + '</th>'; }).join('') + '<th>All</th></tr></thead><tbody>' +
-      (list.length ? list.map(function (x) { return '<tr><td>' + esc(x.o) + '</td>' + x.by.map(function (c) { return '<td>' + cell(c) + '</td>'; }).join('') + '<td><b>' + cell(x.all) + '</b></td></tr>'; }).join('') : '<tr><td colspan="' + (names.length + 2) + '">No RFAs answered on time yet.</td></tr>') + '</tbody></table>' +
-      '<div class="hint" style="padding:6px 14px 10px">Each cell is the average elapsed days, with the number of RFAs answered on time in brackets. The most negative average (answered the earliest) is at the top.</div>';
+    }).filter(function (x) { return x.all.n; });
+    var pick = function (x) { return omSort.col === 'all' ? x.all : x.by[omSort.col] || x.all; };
+    list.sort(function (a, b) {
+      var x = pick(a), y = pick(b);
+      if (!x.n && !y.n) return 0; if (!x.n) return 1; if (!y.n) return -1;          // offices with nothing in that column go last
+      return (x.avg - y.avg) * omSort.dir || y.n - x.n;
+    });
+    var th = function (label, col) {
+      if (forPrint) return '<th>' + label + '</th>';
+      var on = omSort.col === col, arrow = on ? (omSort.dir === 1 ? ' &#9650;' : ' &#9660;') : '';
+      return '<th><button type="button" class="sortb' + (on ? ' on' : '') + '" data-omsort="' + col + '" title="Sort by ' + esc(label) + '">' + esc(label) + arrow + '</button></th>';
+    };
+    return '<table class="avg om"><thead><tr><th>Rank and office</th>' + names.map(function (n, i) { return th(n, i); }).join('') + th('All', 'all') + '</tr></thead><tbody>' +
+      (list.length ? list.map(function (x, i) { return '<tr><td><b>' + (i + 1) + '.</b> ' + esc(x.o) + '</td>' + x.by.map(function (c, k) { return '<td' + (omSort.col === k ? ' style="background:#FFF3D6"' : '') + '>' + cell(c) + '</td>'; }).join('') + '<td' + (omSort.col === 'all' ? ' style="background:#FFF3D6"' : '') + '><b>' + cell(x.all) + '</b></td></tr>'; }).join('') : '<tr><td colspan="' + (names.length + 2) + '">No RFAs answered on time yet.</td></tr>') + '</tbody></table>' +
+      '<div class="hint" style="padding:6px 14px 10px">Each cell is the average elapsed days, with the number of RFAs answered on time in brackets. Click Simple, Complex, Technical or All to rank the offices by that column; the most negative average (answered the earliest) comes first. Click again to reverse.</div>';
   }
   function avgTable(rows) {
     var names = (S.lists.classes || []).map(function (c) { return c.name; });
@@ -829,7 +844,7 @@
     hbars($('chPlatform'), countBy(rows, 'platform'), 'var(--orange)');
     hbars($('chOffice'), countBy(rows, 'office'), 'var(--sky)');
     hbars($('chNature'), countBy(rows, 'nature'), 'var(--coral)');
-    $('dashAvg').innerHTML = avgTable(rows) + (oSel ? '' : '<h3 style="margin:6px 14px 4px;font-size:14px">By office</h3>' + officeMatrix(rows));
+    $('dashAvg').innerHTML = avgTable(rows) + (oSel ? '' : '<div style="height:8px"></div>' + officeMatrix(rows));
 
     var list = pend.slice().sort(function (a, b) { return String(a.dueDate || '9999').localeCompare(String(b.dueDate || '9999')); }).slice(0, 8);
     $('dashPending').innerHTML = list.length ? '<table><thead><tr><th>Due</th><th>Transaction no.</th><th>Office</th><th>Status</th></tr></thead><tbody>' +
@@ -840,6 +855,12 @@
           '<div class="hint">' + esc(r.sender) + '</div></td><td>' + esc(r.office) + '<div class="hint">Encoded by ' + esc(encoder(r)) + '</div></td><td>' + statusPill(r) + '</td></tr>';
       }).join('') + '</tbody></table>' : '<div class="empty">No pending RFAs. Everything is closed.</div>';
   }
+  $('dashAvg').addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-omsort]'); if (!b) return;
+    var c = b.dataset.omsort; c = c === 'all' ? 'all' : Number(c);
+    if (omSort.col === c) omSort.dir = -omSort.dir; else { omSort.col = c; omSort.dir = 1; }
+    renderDashboard();
+  });
   $('dashMonth').addEventListener('change', renderDashboard); $('dashOffice').addEventListener('change', renderDashboard);
   $('kpis').addEventListener('click', function (ev) {
     var b = ev.target.closest('[data-kpi]'); if (!b) return;
@@ -1310,7 +1331,7 @@
       pend.length + '</td><td>' + over.length + '</td><td>' + (timed.length ? ont.length + ' of ' + timed.length + ' (' + pct(ont.length, timed.length) + ')' : '-') + '</td></tr></tbody></table>' +
       '<div class="cols2"><div><h2>By office</h2>' + tbl('Office', countBy(rows, 'office')) + '</div><div><h2>By platform</h2>' + tbl('Platform', countBy(rows, 'platform')) +
       '<h2>By classification</h2>' + tbl('Classification', countBy(rows, 'classification')) + '</div></div>' +
-      '<h2>Answered on time: average elapsed days</h2>' + avgTable(rows) + '<h2>Average elapsed days by office</h2>' + officeMatrix(rows) + '<h2>By nature of complaint</h2>' + tbl('Nature of complaint', top) +
+      '<h2>Answered on time: average elapsed days</h2>' + avgTable(rows) + '<h2>Average elapsed days by office</h2>' + officeMatrix(rows, true) + '<h2>By nature of complaint</h2>' + tbl('Nature of complaint', top) +
       (pend.length ? '<h2>Pending RFAs as of ' + esc(fmtDate(S.today)) + '</h2><table><thead><tr><th>Date received</th><th>Transaction no.</th><th>Office</th><th>Nature of complaint</th><th>Due date</th></tr></thead><tbody>' +
         pend.slice().sort(function (a, b) { return String(a.dueDate).localeCompare(String(b.dueDate)); }).map(function (r) {
           return '<tr><td>' + esc(fmtDate(r.dateReceived)) + '</td><td>' + esc(r.txn) + '</td><td>' + esc(r.office) + '</td><td>' + esc(r.nature) + '</td><td>' + esc(fmtDate(r.dueDate)) + (isOverdue(r) ? ' (overdue)' : '') + '</td></tr>';
