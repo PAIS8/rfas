@@ -488,6 +488,9 @@
   var $ = function (id) { return document.getElementById(id); };
   // Version and changelog. Add the newest version at the top when the code changes.
   var CHANGELOG = [
+    { v: '1.5.0', date: '2026-11-13', items: [
+      'Staff can add and update RFAs by typing straight into the MASTERFILE tab of the Google Sheet. The Sheet fills in the Month, No. of Days, Due Date and elapsed days by itself, and the app shows those rows with the same numbers. The app reloads on its own within a minute after someone edits the Sheet.',
+      'Passwords are no longer kept in the Sheet, because staff can open it. They are kept in the script itself.' ] },
     { v: '1.4.0', date: '2026-11-13', items: [
       'The app can now be opened from GitHub Pages (pais8.github.io/rfas). It sends its calls to the same Apps Script server, so the Sheet and the sign-ins are the same as on the Google link.' ] },
     { v: '1.3.0', date: '2026-11-13', items: [
@@ -1152,14 +1155,17 @@
   function stopPolling() { if (pollTimer) clearInterval(pollTimer); pollTimer = null; }
   function startPolling() {
     stopPolling();
-    if (S.user.role === 'Administrator') return;
+    S.rev = null;
     pollTimer = setInterval(function () {
       if (!S.token) return;
       quiet('poll', S.token).then(function (res) {
         if (!res || !S.user) return;
+        // Someone typed into the Google Sheet directly: load the records again.
+        if (S.rev !== null && res.rev !== S.rev && !document.querySelector('#overlays .overlay')) { S.rev = res.rev; load(); return; }
+        if (S.rev === null || !document.querySelector('#overlays .overlay')) S.rev = res.rev;
         var before = {}; S.requests.forEach(function (q) { before[q.id] = q.status; });
         S.requests = res.requests || [];
-        if (!can('io2')) S.requests.forEach(function (q) {
+        if (S.user.role !== 'Administrator' && !can('io2')) S.requests.forEach(function (q) {
           if (before[q.id] === 'Pending' && q.status !== 'Pending') toast('Your request to ' + q.type.toLowerCase() + ' ' + q.txn + ' was ' + (q.status === 'Not allowed' ? 'not allowed.' : 'allowed.'));
         });
         badges(); if (S.page === 'requests') renderRequests();
