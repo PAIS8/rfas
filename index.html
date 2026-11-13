@@ -324,6 +324,7 @@
       <div class="ph">
         <div><h1>Dashboard</h1><p id="dashSub"></p></div>
         <div class="actions">
+          <select class="in" id="dashOffice" style="width:auto;max-width:230px;margin:0" aria-label="Office"></select>
           <select class="in" id="dashMonth" style="width:auto;margin:0" aria-label="Period"></select>
           <button class="btn" id="btnReport">Export PDF report</button>
           <button class="btn" id="btnRefresh">Refresh</button>
@@ -337,13 +338,13 @@
             <div class="cols" id="chMonths"></div><div class="col-labels" id="chMonthLabels"></div>
             <div class="legend"><span><i style="background:var(--sky)"></i>Closed - Resolved</span><span><i style="background:var(--orange)"></i>Pending</span></div>
           </div></div>
-          <div class="card"><h2>Answered on time: average elapsed days</h2><div style="padding:10px 14px 0"><select class="in" id="avgOffice" style="width:auto;max-width:100%;margin:0" aria-label="Office"></select></div><div class="tablewrap" style="margin-top:10px" id="dashAvg"></div></div>
           <div class="card"><h2>By platform</h2><div class="body" id="chPlatform"></div></div>
           <div class="card"><h2>Pending RFAs, nearest deadline first</h2><div class="tablewrap" style="margin-top:10px" id="dashPending"></div></div>
         </div>
         <div class="dcol">
           <div class="card"><h2>By office</h2><div class="body scroll" id="chOffice" style="max-height:340px"></div></div>
           <div class="card"><h2>By nature of complaint</h2><div class="body scroll" id="chNature" style="max-height:520px"></div></div>
+          <div class="card"><h2>Answered on time: average elapsed days</h2><div class="tablewrap" style="margin-top:10px" id="dashAvg"></div></div>
         </div>
       </div>
     </section>
@@ -491,6 +492,8 @@
   var $ = function (id) { return document.getElementById(id); };
   // Version and changelog. Add the newest version at the top when the code changes.
   var CHANGELOG = [
+    { v: '1.7.2', date: '2026-11-13', items: [
+      'Dashboard: new Office filter next to the period filter. It filters the whole dashboard (totals, charts, averages) and the PDF report to one office. The average elapsed days table moved under By nature of complaint.' ] },
     { v: '1.7.1', date: '2026-11-13', items: [
       'The average elapsed days table can be filtered by office, and a new By office table (Simple, Complex, Technical and All, best average first) shows the average elapsed days of RFAs answered on time for each office, for awarding. The table also follows the chosen period and is included in the PDF report.' ] },
     { v: '1.7.0', date: '2026-11-13', items: [
@@ -782,14 +785,16 @@
   }
   function renderDashboard() {
     var mSel = $('dashMonth').value;
-    var rows = S.records.filter(function (r) { return inPeriod(r, mSel); });
+    var oSel = $('dashOffice').value;
+    var inOff = function (r) { return !oSel || r.office === oSel; };
+    var rows = S.records.filter(function (r) { return inPeriod(r, mSel) && inOff(r); });
     var closed = rows.filter(function (r) { return !isPending(r); });
     var pend = rows.filter(isPending);
     var over = rows.filter(isOverdue);
     var timed = closed.filter(function (r) { return r.elapsed !== '' && !isNaN(Number(r.elapsed)); });
     var onTime = timed.filter(function (r) { return Number(r.elapsed) <= 0; });
     var rate = timed.length ? Math.round(onTime.length / timed.length * 100) : null;
-    $('dashSub').textContent = periodName(mSel) + ' - as of ' + fmtDate(S.today);
+    $('dashSub').textContent = (oSel ? oSel + ' - ' : '') + periodName(mSel) + ' - as of ' + fmtDate(S.today);
     var k = [
       ['Total RFAs', rows.length, mSel ? 'received in ' + periodName(mSel).replace(/ \(.*\)/, '') : 'in the masterfile', 'var(--dusk)', '', mSel ? 'Back to all months' : 'Main dashboard'],
       ['Closed - Resolved', closed.length, rows.length ? Math.round(closed.length / rows.length * 100) + '% of total' : '', 'var(--sky)', 'Closed - Resolved', 'Show the closed RFAs'],
@@ -802,7 +807,7 @@
     }).join('');
 
     var per = MONTHS.map(function (m) {
-      var rs = S.records.filter(function (r) { return r.month === m; });
+      var rs = S.records.filter(function (r) { return r.month === m && inOff(r); });
       return { m: m, c: rs.filter(function (r) { return !isPending(r); }).length, p: rs.filter(isPending).length };
     });
     var max = Math.max.apply(null, per.map(function (x) { return x.c + x.p; }).concat([1]));
@@ -815,10 +820,7 @@
     hbars($('chPlatform'), countBy(rows, 'platform'), 'var(--orange)');
     hbars($('chOffice'), countBy(rows, 'office'), 'var(--sky)');
     hbars($('chNature'), countBy(rows, 'nature'), 'var(--coral)');
-    var offs = uniq('office', S.lists.offices).filter(function (o) { return rows.some(function (r) { return r.office === o; }); });
-    var cur = $('avgOffice').value; opts($('avgOffice'), 'All offices', offs, false); if (offs.indexOf(cur) >= 0) $('avgOffice').value = cur;
-    var aOff = $('avgOffice').value;
-    $('dashAvg').innerHTML = avgTable(aOff ? rows.filter(function (r) { return r.office === aOff; }) : rows) + (aOff ? '' : '<h3 style="margin:6px 14px 4px;font-size:14px">By office</h3>' + officeMatrix(rows));
+    $('dashAvg').innerHTML = avgTable(rows) + (oSel ? '' : '<h3 style="margin:6px 14px 4px;font-size:14px">By office</h3>' + officeMatrix(rows));
 
     var list = pend.slice().sort(function (a, b) { return String(a.dueDate || '9999').localeCompare(String(b.dueDate || '9999')); }).slice(0, 8);
     $('dashPending').innerHTML = list.length ? '<table><thead><tr><th>Due</th><th>Transaction no.</th><th>Office</th><th>Status</th></tr></thead><tbody>' +
@@ -829,12 +831,12 @@
           '<div class="hint">' + esc(r.sender) + '</div></td><td>' + esc(r.office) + '<div class="hint">Encoded by ' + esc(encoder(r)) + '</div></td><td>' + statusPill(r) + '</td></tr>';
       }).join('') + '</tbody></table>' : '<div class="empty">No pending RFAs. Everything is closed.</div>';
   }
-  $('dashMonth').addEventListener('change', renderDashboard); $('avgOffice').addEventListener('change', renderDashboard);
+  $('dashMonth').addEventListener('change', renderDashboard); $('dashOffice').addEventListener('change', renderDashboard);
   $('kpis').addEventListener('click', function (ev) {
     var b = ev.target.closest('[data-kpi]'); if (!b) return;
-    if (!b.dataset.kpi) { $('dashMonth').value = ''; renderDashboard(); window.scrollTo(0, 0); return; }
+    if (!b.dataset.kpi) { $('dashMonth').value = ''; $('dashOffice').value = ''; renderDashboard(); window.scrollTo(0, 0); return; }
     ['fQ', 'fOffice', 'fPlatform', 'fClass', 'fEnc'].forEach(function (id) { $(id).value = ''; });
-    $('fMonth').value = $('dashMonth').value; $('fStatus').value = b.dataset.kpi; S.pg = 0; go('records');
+    $('fOffice').value = $('dashOffice').value; $('fMonth').value = $('dashMonth').value; $('fStatus').value = b.dataset.kpi; S.pg = 0; go('records');
   });
   $('btnReport').addEventListener('click', printReport);
 
@@ -853,7 +855,7 @@
   function fillFilters() {
     var months = MONTHS.filter(function (m) { return S.records.some(function (r) { return r.month === m; }); });
     fillPeriod($('dashMonth'), 'Annual (all months)', months); fillPeriod($('fMonth'), 'All months', months);
-    opts($('fOffice'), 'All offices', uniq('office', S.lists.offices), true);
+    opts($('fOffice'), 'All offices', uniq('office', S.lists.offices), true); opts($('dashOffice'), 'All offices', uniq('office', S.lists.offices), true);
     opts($('fPlatform'), 'All platforms', uniq('platform', S.lists.platforms), true);
     opts($('fClass'), 'All classifications', uniq('classification', S.lists.classes.map(function (c) { return c.name; })), true);
     opts($('fStatus'), 'All statuses', uniq('status', S.lists.statuses).concat(['Overdue', 'Answered on time']), true);
@@ -1278,7 +1280,8 @@
   /* ---------------------------------- PDF report ------------------------------ */
   function printReport() {
     var mSel = $('dashMonth').value;
-    var rows = S.records.filter(function (r) { return inPeriod(r, mSel); });
+    var oSel = $('dashOffice').value;
+    var rows = S.records.filter(function (r) { return inPeriod(r, mSel) && (!oSel || r.office === oSel); });
     var years = {}; rows.forEach(function (r) { var y = String(r.dateReceived).slice(0, 4); if (/^\d{4}$/.test(y)) years[y] = 1; });
     var yr = Object.keys(years).sort().join(' and ') || String(S.today).slice(0, 4);
     var period = mSel === 'SEM1' ? 'January to June ' + yr : mSel === 'SEM2' ? 'July to December ' + yr : mSel ? mSel + ' ' + yr : 'January to ' + (MONTHS[Number(String(S.today).slice(5, 7)) - 1]) + ' ' + String(S.today).slice(0, 4);
@@ -1293,7 +1296,7 @@
     var nat = countBy(rows, 'nature'), top = nat.slice(0, 6), rest = nat.slice(6).reduce(function (a, b) { return a + b.n; }, 0);
     if (rest) top.push({ k: 'Other natures of complaint', n: rest });
     var html = '<div class="rh"><img alt="" src="' + LOGOS.dpwh + '"><div>Republic of the Philippines<b class="dep">DEPARTMENT OF PUBLIC WORKS AND HIGHWAYS</b><b>REGIONAL OFFICE VIII</b>Government Center, Baras, Palo, Leyte</div><img alt="" src="' + LOGOS.bp + '"></div>' +
-      '<h1>RFAs MONITORING REPORT</h1><p class="sub">Public Affairs and Information Office<br>' + (mSel === 'SEM1' ? 'First semester: ' : mSel === 'SEM2' ? 'Second semester: ' : mSel ? 'For the month of ' : 'For the period ') + '<b>' + esc(period) + '</b></p>' +
+      '<h1>RFAs MONITORING REPORT</h1><p class="sub">Public Affairs and Information Office<br>' + (oSel ? '<b>' + esc(oSel) + '</b><br>' : '') + (mSel === 'SEM1' ? 'First semester: ' : mSel === 'SEM2' ? 'Second semester: ' : mSel ? 'For the month of ' : 'For the period ') + '<b>' + esc(period) + '</b></p>' +
       '<h2>Summary</h2><table><thead><tr><th>Total RFAs received</th><th>Closed - Resolved</th><th>Pending</th><th>Overdue</th><th>Answered on time</th></tr></thead><tbody><tr><td>' + rows.length + '</td><td>' + closed.length + ' (' + pct(closed.length, rows.length) + ')</td><td>' +
       pend.length + '</td><td>' + over.length + '</td><td>' + (timed.length ? ont.length + ' of ' + timed.length + ' (' + pct(ont.length, timed.length) + ')' : '-') + '</td></tr></tbody></table>' +
       '<div class="cols2"><div><h2>By office</h2>' + tbl('Office', countBy(rows, 'office')) + '</div><div><h2>By platform</h2>' + tbl('Platform', countBy(rows, 'platform')) +
