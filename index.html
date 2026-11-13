@@ -461,6 +461,8 @@
   var $ = function (id) { return document.getElementById(id); };
   // Version and changelog. Add the newest version at the top when the code changes.
   var CHANGELOG = [
+    { v: '1.6.2', date: '2026-11-13', items: [
+      'A pending RFA\'s deadline is now always counted again on the screen in working days (Monday to Friday, skipping holidays), so an old or typed date in the Sheet can no longer show on a weekend or holiday. A red bar appears if the Google script is older than the screen.' ] },
     { v: '1.6.1', date: '2026-11-13', items: [
       'Setup helper for the Google Sheet: run once in Apps Script to give permission and set up the dropdowns, locked computed columns and working-day deadlines.' ] },
     { v: '1.6.0', date: '2026-11-13', items: [
@@ -528,6 +530,15 @@
     while (left > 0) { d.setDate(d.getDate() + 1); var w = d.getDay(); if (w !== 0 && w !== 6 && S.holidays.indexOf(ymd(d)) < 0) left--; }
     return ymd(d);
   }
+  // Safety net: a pending RFA's deadline is always counted again here in working days, so a stale value can never show on a weekend or holiday.
+  function fixDue(list) {
+    list.forEach(function (r) {
+      if (isPending(r) && r.dateReceived && r.days !== '' && r.days !== null && r.days !== undefined) { var d = workday(r.dateReceived, r.days); if (d) r.dueDate = d; }
+    });
+    return list;
+  }
+  var recStore = [];
+  Object.defineProperty(S, 'records', { get: function () { return recStore; }, set: function (v) { recStore = fixDue(v || []); }, enumerable: true });
   function isPending(r) { return String(r.status).toLowerCase().indexOf('closed') < 0; }
   function isOverdue(r) { return isPending(r) && r.dueDate && String(r.dueDate) < S.today; }
   function daysBetween(a, b) { var x = parseYmd(a), y = parseYmd(b); return x && y ? Math.round((y - x) / 86400000) : null; }
@@ -547,6 +558,7 @@
   function setHolidays(list) {
     S.holidayList = list || [];
     S.holidays = S.holidayList.filter(function (h) { return h.type !== 'Event'; }).map(function (h) { return h.date; });   // only holidays skip working days
+    S.records = S.records;
   }
   function holidayOn(k) { return S.holidayList.filter(function (h) { return h.date === k && h.type !== 'Event'; })[0] || null; }
   function eventsOn(k) { return S.holidayList.filter(function (h) { return h.date === k && h.type === 'Event'; }); }
@@ -623,9 +635,16 @@
     $('overlays').innerHTML = ''; $('app').classList.add('hidden'); $('login').classList.remove('hidden');
     $('loginErr').textContent = msg || '';
   }
+  function versionCheck(sv) {
+    var b = $('verWarn');
+    if (!b) { b = document.createElement('div'); b.id = 'verWarn'; b.setAttribute('role', 'alert'); b.style.cssText = 'background:#E06D58;color:#fff;padding:8px 14px;font-size:13px;text-align:center;position:sticky;top:0;z-index:50'; $('app').insertBefore(b, $('app').firstChild); }
+    var ok = sv === CHANGELOG[0].v;
+    b.style.display = ok ? 'none' : '';
+    b.textContent = 'The Google script is ' + (sv ? 'version ' + sv : 'an older version') + ' but this screen is ' + CHANGELOG[0].v + '. Paste the new Code.gs in Apps Script and deploy a New version.';
+  }
   function load() {
     return api('getData', S.token).then(function (d) {
-      S.user = d.user; S.lists = d.lists; setHolidays(d.holidays); S.records = d.records || []; S.today = d.today;
+      S.user = d.user; S.lists = d.lists; setHolidays(d.holidays); S.records = d.records || []; S.today = d.today; versionCheck(d.serverVersion);
       S.trash = d.trash || []; S.trashDays = d.trashDays || 5;
       $('login').classList.add('hidden'); $('app').classList.remove('hidden');
       $('meName').textContent = S.user.name; $('meRole').textContent = S.user.position || S.user.role;
