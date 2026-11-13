@@ -115,6 +115,7 @@
   .dcol { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
   .avg td, .avg th { text-align: right; white-space: nowrap; }
   .sortb { all: unset; cursor: pointer; font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit; white-space: nowrap; } .sortb:hover, .sortb.on { color: var(--dusk, #2F4A6D); text-decoration: underline; } .sortb:focus-visible { outline: 2px solid var(--orange, #FC9E54); outline-offset: 2px; }
+  .avg.om tr.allrow td { background: #FAF0E4; border-top: 2px solid var(--line, #E6D5BF); }
   .avg.om { table-layout: auto; width: 100%; } .avg.om td, .avg.om th { padding: 9px 6px; font-size: 12.5px; } .avg.om td:first-child, .avg.om th:first-child { white-space: normal; min-width: 120px; padding-left: 14px; } .avg td:first-child, .avg th:first-child { text-align: left; }
   .legend { display: flex; gap: 14px; font-size: 12.5px; color: var(--muted); margin-top: 8px; flex-wrap: wrap; }
   .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; }
@@ -347,7 +348,7 @@
         <div class="dcol">
           <div class="card"><h2>By office</h2><div class="body scroll" id="chOffice" style="max-height:340px"></div></div>
           <div class="card"><h2>By nature of complaint</h2><div class="body scroll" id="chNature" style="max-height:520px"></div></div>
-          <div class="card"><h2>Answered on time: average elapsed days</h2><div class="tablewrap" style="margin-top:10px" id="dashAvg"></div></div>
+          <div class="card"><h2>Office ranking: RFAs answered on time</h2><div class="tablewrap" style="margin-top:10px" id="dashAvg"></div></div>
         </div>
       </div>
     </section>
@@ -495,6 +496,8 @@
   var $ = function (id) { return document.getElementById(id); };
   // Version and changelog. Add the newest version at the top when the code changes.
   var CHANGELOG = [
+    { v: '1.7.6', date: '2026-11-13', items: [
+      'Removed the Simple, Complex and Technical summary table. The card is now "Office ranking: RFAs answered on time" with a caption, a "Rank / Office" column and an "All offices" row at the bottom, and it works with the Office filter.' ] },
     { v: '1.7.5', date: '2026-11-13', items: [
       'The By office averaging table can be ranked: click Simple, Complex, Technical or All to sort the offices by that column (best average first, click again to reverse). A rank number was added and the "By office" heading above the table was removed.' ] },
     { v: '1.7.4', date: '2026-11-13', items: [
@@ -794,18 +797,9 @@
       var on = omSort.col === col, arrow = on ? (omSort.dir === 1 ? ' &#9650;' : ' &#9660;') : '';
       return '<th><button type="button" class="sortb' + (on ? ' on' : '') + '" data-omsort="' + col + '" title="Sort by ' + esc(label) + '">' + esc(label) + arrow + '</button></th>';
     };
-    return '<table class="avg om"><thead><tr><th>Rank and office</th>' + names.map(function (n, i) { return th(n, i); }).join('') + th('All', 'all') + '</tr></thead><tbody>' +
-      (list.length ? list.map(function (x, i) { return '<tr><td><b>' + (i + 1) + '.</b> ' + esc(x.o) + '</td>' + x.by.map(function (c, k) { return '<td' + (omSort.col === k ? ' style="background:#FFF3D6"' : '') + '>' + cell(c) + '</td>'; }).join('') + '<td' + (omSort.col === 'all' ? ' style="background:#FFF3D6"' : '') + '><b>' + cell(x.all) + '</b></td></tr>'; }).join('') : '<tr><td colspan="' + (names.length + 2) + '">No RFAs answered on time yet.</td></tr>') + '</tbody></table>' +
-      '<div class="hint" style="padding:6px 14px 10px">Each cell is the average elapsed days, with the number of RFAs answered on time in brackets. Click Simple, Complex, Technical or All to rank the offices by that column; the most negative average (answered the earliest) comes first. Click again to reverse.</div>';
-  }
-  function avgTable(rows) {
-    var names = (S.lists.classes || []).map(function (c) { return c.name; });
-    rows.forEach(function (r) { if (r.classification && names.indexOf(r.classification) < 0) names.push(r.classification); });
-    var all = avgOf(rows);
-    return '<table class="avg"><thead><tr><th>Class</th><th>On time</th><th>Avg elapsed</th><th>Avg to answer</th></tr></thead><tbody>' +
-      names.map(function (nm) { var x = avgOf(rows.filter(function (r) { return r.classification === nm; })); return '<tr><td>' + esc(nm) + '</td><td>' + x.n + '</td><td>' + f1(x.avg) + '</td><td>' + f1(x.took) + '</td></tr>'; }).join('') +
-      '<tr><th>All</th><th>' + all.n + '</th><th>' + f1(all.avg) + '</th><th>' + f1(all.took) + '</th></tr></tbody></table>' +
-      '<div class="hint" style="padding:6px 14px 10px">Elapsed days is the answer date minus the deadline, so a negative number means answered that many days before the deadline. Avg elapsed = average of the elapsed days of RFAs answered on time. Avg to answer = average days from the date received to the answer.</div>';
+    return '<div class="hint" style="padding:0 14px 8px">Average No. of elapsed days of RFAs answered on time, per office. A negative number is days before the deadline, so the lower the number, the better the rank. ' + (forPrint ? '' : 'Click Simple, Complex, Technical or All to rank the offices by that column.') + '</div><table class="avg om"><thead><tr><th>Rank / Office</th>' + names.map(function (n, i) { return th(n, i); }).join('') + th('All', 'all') + '</tr></thead><tbody>' +
+      (list.length ? list.map(function (x, i) { return '<tr><td><b>' + (i + 1) + '.</b> ' + esc(x.o) + '</td>' + x.by.map(function (c, k) { return '<td' + (omSort.col === k ? ' style="background:#FFF3D6"' : '') + '>' + cell(c) + '</td>'; }).join('') + '<td' + (omSort.col === 'all' ? ' style="background:#FFF3D6"' : '') + '><b>' + cell(x.all) + '</b></td></tr>'; }).join('') : '<tr><td colspan="' + (names.length + 2) + '">No RFAs answered on time yet.</td></tr>') + (list.length ? '<tr class="allrow"><td><b>All offices</b></td>' + names.map(function (nm) { return '<td>' + cell(avgOf(rows.filter(function (r) { return r.classification === nm; }))) + '</td>'; }).join('') + '<td><b>' + cell(avgOf(rows)) + '</b></td></tr>' : '') + '</tbody></table>' +
+      '<div class="hint" style="padding:6px 14px 10px">Each cell shows the average, with the number of RFAs answered on time in brackets.</div>';
   }
   function renderDashboard() {
     var mSel = $('dashMonth').value;
@@ -844,7 +838,7 @@
     hbars($('chPlatform'), countBy(rows, 'platform'), 'var(--orange)');
     hbars($('chOffice'), countBy(rows, 'office'), 'var(--sky)');
     hbars($('chNature'), countBy(rows, 'nature'), 'var(--coral)');
-    $('dashAvg').innerHTML = avgTable(rows) + (oSel ? '' : '<div style="height:8px"></div>' + officeMatrix(rows));
+    $('dashAvg').innerHTML = officeMatrix(rows);
 
     var list = pend.slice().sort(function (a, b) { return String(a.dueDate || '9999').localeCompare(String(b.dueDate || '9999')); }).slice(0, 8);
     $('dashPending').innerHTML = list.length ? '<table><thead><tr><th>Due</th><th>Transaction no.</th><th>Office</th><th>Status</th></tr></thead><tbody>' +
@@ -1331,7 +1325,7 @@
       pend.length + '</td><td>' + over.length + '</td><td>' + (timed.length ? ont.length + ' of ' + timed.length + ' (' + pct(ont.length, timed.length) + ')' : '-') + '</td></tr></tbody></table>' +
       '<div class="cols2"><div><h2>By office</h2>' + tbl('Office', countBy(rows, 'office')) + '</div><div><h2>By platform</h2>' + tbl('Platform', countBy(rows, 'platform')) +
       '<h2>By classification</h2>' + tbl('Classification', countBy(rows, 'classification')) + '</div></div>' +
-      '<h2>Answered on time: average elapsed days</h2>' + avgTable(rows) + '<h2>Average elapsed days by office</h2>' + officeMatrix(rows, true) + '<h2>By nature of complaint</h2>' + tbl('Nature of complaint', top) +
+      '<h2>Office ranking: RFAs answered on time</h2>' + officeMatrix(rows, true) + '<h2>By nature of complaint</h2>' + tbl('Nature of complaint', top) +
       (pend.length ? '<h2>Pending RFAs as of ' + esc(fmtDate(S.today)) + '</h2><table><thead><tr><th>Date received</th><th>Transaction no.</th><th>Office</th><th>Nature of complaint</th><th>Due date</th></tr></thead><tbody>' +
         pend.slice().sort(function (a, b) { return String(a.dueDate).localeCompare(String(b.dueDate)); }).map(function (r) {
           return '<tr><td>' + esc(fmtDate(r.dateReceived)) + '</td><td>' + esc(r.txn) + '</td><td>' + esc(r.office) + '</td><td>' + esc(r.nature) + '</td><td>' + esc(fmtDate(r.dueDate)) + (isOverdue(r) ? ' (overdue)' : '') + '</td></tr>';
