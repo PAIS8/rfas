@@ -496,6 +496,8 @@
   var $ = function (id) { return document.getElementById(id); };
   // Version and changelog. Add the newest version at the top when the code changes.
   var CHANGELOG = [
+    { v: '1.7.8', date: '2026-11-13', items: [
+      'A Date answered earlier than Date received is now flagged: the two cells turn red in the Sheet, the RFA shows "check dates" in the app, and it is left out of the ranking (with a note listing it) until the date is corrected.' ] },
     { v: '1.7.7', date: '2026-11-13', items: [
       'Office ranking: new "Export ranking PDF" button. The PDF shows the ranking (in the order you sorted it) and, for each office, the transaction numbers of the RFAs answered on time with their class, dates and elapsed days.',
       'Office ranking: new "Minimum RFAs for a rank" box. Raise it (for example to 5) so an office needs that many RFAs answered on time in the ranked column before it gets a rank. The others are listed below without a rank.',
@@ -595,12 +597,15 @@
   }
   var recStore = [];
   Object.defineProperty(S, 'records', { get: function () { return recStore; }, set: function (v) { recStore = fixDue(v || []); }, enumerable: true });
+  // An RFA cannot be answered before it was received: one of the two dates is a typing mistake.
+  function badDates(r) { var d = daysBetween(r.dateReceived, r.dateSubmitted); return d !== null && d < 0; }
   function isPending(r) { return String(r.status).toLowerCase().indexOf('closed') < 0; }
   function isOverdue(r) { return isPending(r) && r.dueDate && String(r.dueDate) < S.today; }
   function daysBetween(a, b) { var x = parseYmd(a), y = parseYmd(b); return x && y ? Math.round((y - x) / 86400000) : null; }
   function statusPill(r) {
     if (isOverdue(r)) return '<span class="pill overdue">Pending, overdue</span>';
     if (isPending(r)) return '<span class="pill pending">' + esc(r.status || 'Pending') + '</span>';
+    if (badDates(r)) return '<span class="pill overdue" title="Date answered is earlier than date received">' + esc(r.status) + ', check dates</span>';
     return '<span class="pill closed">' + esc(r.status) + '</span>';
   }
   function encoder(r) { var e = String(r.encodedBy || ''); return /^imported/i.test(e) ? 'Excel import' : e; }
@@ -772,7 +777,7 @@
   }
   // Average of the "No. of elapsed days" of RFAs answered on time (zero or below), per classification.
   function avgOf(list) {
-    var ok = list.filter(function (r) { return !isPending(r) && r.elapsed !== '' && !isNaN(Number(r.elapsed)) && Number(r.elapsed) <= 0; });
+    var ok = list.filter(function (r) { return !isPending(r) && !badDates(r) && r.elapsed !== '' && !isNaN(Number(r.elapsed)) && Number(r.elapsed) <= 0; });
     var el = ok.reduce(function (a, r) { return a + Number(r.elapsed); }, 0);
     var took = ok.map(function (r) { return daysBetween(r.dateReceived, r.dateSubmitted); }).filter(function (v) { return v !== null; });
     var tk = took.reduce(function (a, v) { return a + v; }, 0);
@@ -854,7 +859,8 @@
     hbars($('chPlatform'), countBy(rows, 'platform'), 'var(--orange)');
     hbars($('chOffice'), countBy(rows, 'office'), 'var(--sky)');
     hbars($('chNature'), countBy(rows, 'nature'), 'var(--coral)');
-    $('dashAvg').innerHTML = officeMatrix(rows);
+    var bad = rows.filter(function (r) { return !isPending(r) && badDates(r); });
+    $('dashAvg').innerHTML = officeMatrix(rows) + (bad.length ? '<div class="hint" style="padding:8px 14px;color:#7E2415">Left out of the ranking because Date answered is earlier than Date received (please correct them in the Sheet): ' + bad.map(function (r) { return esc(r.txn); }).join(', ') + '</div>' : '');
 
     var list = pend.slice().sort(function (a, b) { return String(a.dueDate || '9999').localeCompare(String(b.dueDate || '9999')); }).slice(0, 8);
     $('dashPending').innerHTML = list.length ? '<table><thead><tr><th>Due</th><th>Transaction no.</th><th>Office</th><th>Status</th></tr></thead><tbody>' +
@@ -1369,7 +1375,7 @@
     var rl = rankList(rows), names = rl.names;
     var colName = omSort.col === 'all' ? 'All' : names[omSort.col];
     var detail = rl.list.map(function (x) {
-      var l = x.mine.filter(function (r) { return !isPending(r) && r.elapsed !== '' && !isNaN(Number(r.elapsed)) && Number(r.elapsed) <= 0; }).sort(function (a, b) { return Number(a.elapsed) - Number(b.elapsed); });
+      var l = x.mine.filter(function (r) { return !isPending(r) && !badDates(r) && r.elapsed !== '' && !isNaN(Number(r.elapsed)) && Number(r.elapsed) <= 0; }).sort(function (a, b) { return Number(a.elapsed) - Number(b.elapsed); });
       return '<h2>' + (x.q ? x.rank + '. ' : 'Not ranked: ') + esc(x.o) + ' (' + l.length + ' answered on time, average ' + f1(x.all.avg) + ' days)</h2>' +
         '<table><thead><tr><th>Transaction no.</th><th>Class</th><th>Date received</th><th>Deadline</th><th>Date answered</th><th class="r">Elapsed days</th></tr></thead><tbody>' +
         l.map(function (r) { return '<tr><td>' + esc(r.txn) + '</td><td>' + esc(r.classification) + '</td><td>' + esc(fmtDate(r.dateReceived)) + '</td><td>' + esc(fmtDate(r.dueDate)) + '</td><td>' + esc(fmtDate(r.dateSubmitted)) + '</td><td class="r">' + r.elapsed + '</td></tr>'; }).join('') + '</tbody></table>';
