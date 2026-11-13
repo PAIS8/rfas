@@ -348,7 +348,7 @@
         <div class="dcol">
           <div class="card"><h2>By office</h2><div class="body scroll" id="chOffice" style="max-height:340px"></div></div>
           <div class="card"><h2>By nature of complaint</h2><div class="body scroll" id="chNature" style="max-height:520px"></div></div>
-          <div class="card"><h2>Office ranking: RFAs answered on time</h2><div class="tablewrap" style="margin-top:10px" id="dashAvg"></div></div>
+          <div class="card"><h2>Office ranking: RFAs answered on time</h2><div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;padding:10px 14px 0"><label class="hint" style="white-space:nowrap" for="omMinIn" title="An office needs at least this many RFAs answered on time (in the column you rank by) to get a rank, so a few lucky RFAs cannot win">Minimum RFAs for a rank</label><input class="in" id="omMinIn" type="number" min="1" max="999" value="1" style="width:70px;margin:0;padding:6px 8px"><button class="btn small" id="btnRankPdf" style="margin-left:auto">Export ranking PDF</button></div><div class="tablewrap" style="margin-top:10px" id="dashAvg"></div></div>
         </div>
       </div>
     </section>
@@ -496,6 +496,10 @@
   var $ = function (id) { return document.getElementById(id); };
   // Version and changelog. Add the newest version at the top when the code changes.
   var CHANGELOG = [
+    { v: '1.7.7', date: '2026-11-13', items: [
+      'Office ranking: new "Export ranking PDF" button. The PDF shows the ranking (in the order you sorted it) and, for each office, the transaction numbers of the RFAs answered on time with their class, dates and elapsed days.',
+      'Office ranking: new "Minimum RFAs for a rank" box. Raise it (for example to 5) so an office needs that many RFAs answered on time in the ranked column before it gets a rank. The others are listed below without a rank.',
+      'Fixed the time shown in the Activity log (and "today" for deadlines): everything now uses the Philippine time zone, and the Sheet\'s own time zone is set to it the first time the script runs.' ] },
     { v: '1.7.6', date: '2026-11-13', items: [
       'Removed the Simple, Complex and Technical summary table. The card is now "Office ranking: RFAs answered on time" with a caption, a "Rank / Office" column and an "All offices" row at the bottom, and it works with the Office filter.' ] },
     { v: '1.7.5', date: '2026-11-13', items: [
@@ -777,29 +781,41 @@
   function f1(v) { return v === null ? '-' : (Math.round(v * 10) / 10).toFixed(1); }
   // Office by classification: the average elapsed days of RFAs answered on time, best (most days early) first. Used for awarding.
   var omSort = { col: 'all', dir: 1 };   // dir 1: best (most days early) first, -1: the other way
-  function officeMatrix(rows, forPrint) {
+  var omMin = 1;                          // an office needs at least this many RFAs answered on time (in the sorted column) to get a rank
+  function rankList(rows) {
     var names = (S.lists.classes || []).map(function (c) { return c.name; });
     var offs = [];
     rows.forEach(function (r) { var o = String(r.office || '').trim() || 'Not specified'; if (offs.indexOf(o) < 0) offs.push(o); });
-    var cell = function (x) { return x.n ? f1(x.avg) + ' <span class="hint">(' + x.n + ')</span>' : '-'; };
     var list = offs.map(function (o) {
       var mine = rows.filter(function (r) { return (String(r.office || '').trim() || 'Not specified') === o; });
-      return { o: o, all: avgOf(mine), by: names.map(function (nm) { return avgOf(mine.filter(function (r) { return r.classification === nm; })); }) };
+      return { o: o, mine: mine, all: avgOf(mine), by: names.map(function (nm) { return avgOf(mine.filter(function (r) { return r.classification === nm; })); }) };
     }).filter(function (x) { return x.all.n; });
     var pick = function (x) { return omSort.col === 'all' ? x.all : x.by[omSort.col] || x.all; };
+    list.forEach(function (x) { x.q = pick(x).n >= Math.max(1, omMin); });
     list.sort(function (a, b) {
       var x = pick(a), y = pick(b);
-      if (!x.n && !y.n) return 0; if (!x.n) return 1; if (!y.n) return -1;          // offices with nothing in that column go last
+      if (a.q !== b.q) return a.q ? -1 : 1;                                             // offices below the minimum go last
+      if (!x.n && !y.n) return 0; if (!x.n) return 1; if (!y.n) return -1;
       return (x.avg - y.avg) * omSort.dir || y.n - x.n;
     });
+    var k = 0; list.forEach(function (x) { x.rank = x.q ? ++k : 0; });
+    return { names: names, list: list };
+  }
+  function officeMatrix(rows, forPrint) {
+    var rl = rankList(rows), names = rl.names, list = rl.list;
+    var cell = function (x) { return x.n ? f1(x.avg) + ' <span class="hint">(' + x.n + ')</span>' : '-'; };
     var th = function (label, col) {
       if (forPrint) return '<th>' + label + '</th>';
       var on = omSort.col === col, arrow = on ? (omSort.dir === 1 ? ' &#9650;' : ' &#9660;') : '';
       return '<th><button type="button" class="sortb' + (on ? ' on' : '') + '" data-omsort="' + col + '" title="Sort by ' + esc(label) + '">' + esc(label) + arrow + '</button></th>';
     };
-    return '<div class="hint" style="padding:0 14px 8px">Average No. of elapsed days of RFAs answered on time, per office. A negative number is days before the deadline, so the lower the number, the better the rank. ' + (forPrint ? '' : 'Click Simple, Complex, Technical or All to rank the offices by that column.') + '</div><table class="avg om"><thead><tr><th>Rank / Office</th>' + names.map(function (n, i) { return th(n, i); }).join('') + th('All', 'all') + '</tr></thead><tbody>' +
-      (list.length ? list.map(function (x, i) { return '<tr><td><b>' + (i + 1) + '.</b> ' + esc(x.o) + '</td>' + x.by.map(function (c, k) { return '<td' + (omSort.col === k ? ' style="background:#FFF3D6"' : '') + '>' + cell(c) + '</td>'; }).join('') + '<td' + (omSort.col === 'all' ? ' style="background:#FFF3D6"' : '') + '><b>' + cell(x.all) + '</b></td></tr>'; }).join('') : '<tr><td colspan="' + (names.length + 2) + '">No RFAs answered on time yet.</td></tr>') + (list.length ? '<tr class="allrow"><td><b>All offices</b></td>' + names.map(function (nm) { return '<td>' + cell(avgOf(rows.filter(function (r) { return r.classification === nm; }))) + '</td>'; }).join('') + '<td><b>' + cell(avgOf(rows)) + '</b></td></tr>' : '') + '</tbody></table>' +
-      '<div class="hint" style="padding:6px 14px 10px">Each cell shows the average, with the number of RFAs answered on time in brackets.</div>';
+    var below = list.filter(function (x) { return !x.q; }).length;
+    return '<div class="hint" style="padding:0 14px 8px">Average No. of elapsed days of RFAs answered on time, per office. A negative number is days before the deadline, so the lower the number, the better the rank. ' + (forPrint ? '' : 'Click Simple, Complex, Technical or All to rank the offices by that column.') +
+      (omMin > 1 ? ' Only offices with at least ' + omMin + ' RFAs answered on time in the ranked column get a rank; the others are listed below without one.' : '') + '</div><table class="avg om"><thead><tr><th>Rank / Office</th>' + names.map(function (n, i) { return th(n, i); }).join('') + th('All', 'all') + '</tr></thead><tbody>' +
+      (list.length ? list.map(function (x) {
+        return '<tr' + (x.q ? '' : ' style="opacity:.6"') + '><td><b>' + (x.q ? x.rank + '.' : '-') + '</b> ' + esc(x.o) + '</td>' + x.by.map(function (c, k) { return '<td' + (omSort.col === k ? ' style="background:#FFF3D6"' : '') + '>' + cell(c) + '</td>'; }).join('') + '<td' + (omSort.col === 'all' ? ' style="background:#FFF3D6"' : '') + '><b>' + cell(x.all) + '</b></td></tr>'; }).join('') : '<tr><td colspan="' + (names.length + 2) + '">No RFAs answered on time yet.</td></tr>') +
+      (list.length ? '<tr class="allrow"><td><b>All offices</b></td>' + names.map(function (nm) { return '<td>' + cell(avgOf(rows.filter(function (r) { return r.classification === nm; }))) + '</td>'; }).join('') + '<td><b>' + cell(avgOf(rows)) + '</b></td></tr>' : '') + '</tbody></table>' +
+      '<div class="hint" style="padding:6px 14px 10px">Each cell shows the average, with the number of RFAs answered on time in brackets.' + (below ? ' ' + below + ' office' + (below === 1 ? '' : 's') + ' below the minimum.' : '') + '</div>';
   }
   function renderDashboard() {
     var mSel = $('dashMonth').value;
@@ -849,6 +865,7 @@
           '<div class="hint">' + esc(r.sender) + '</div></td><td>' + esc(r.office) + '<div class="hint">Encoded by ' + esc(encoder(r)) + '</div></td><td>' + statusPill(r) + '</td></tr>';
       }).join('') + '</tbody></table>' : '<div class="empty">No pending RFAs. Everything is closed.</div>';
   }
+  $('omMinIn').addEventListener('input', function () { omMin = Math.max(1, Math.round(Number($('omMinIn').value) || 1)); renderDashboard(); });
   $('dashAvg').addEventListener('click', function (ev) {
     var b = ev.target.closest('[data-omsort]'); if (!b) return;
     var c = b.dataset.omsort; c = c === 'all' ? 'all' : Number(c);
@@ -1341,6 +1358,38 @@
     quiet('logAction', S.token, 'Exported report', period);
     setTimeout(function () { window.print(); }, 250);
   }
+
+  /* ------------------------- PDF: office ranking with transaction numbers ------------------------- */
+  function printRanking() {
+    var mSel = $('dashMonth').value, oSel = $('dashOffice').value;
+    var rows = S.records.filter(function (r) { return inPeriod(r, mSel) && (!oSel || r.office === oSel); });
+    var years = {}; rows.forEach(function (r) { var y = String(r.dateReceived).slice(0, 4); if (/^\d{4}$/.test(y)) years[y] = 1; });
+    var yr = Object.keys(years).sort().join(' and ') || String(S.today).slice(0, 4);
+    var period = mSel === 'SEM1' ? 'January to June ' + yr : mSel === 'SEM2' ? 'July to December ' + yr : mSel ? mSel + ' ' + yr : 'January to ' + (MONTHS[Number(String(S.today).slice(5, 7)) - 1]) + ' ' + String(S.today).slice(0, 4);
+    var rl = rankList(rows), names = rl.names;
+    var colName = omSort.col === 'all' ? 'All' : names[omSort.col];
+    var detail = rl.list.map(function (x) {
+      var l = x.mine.filter(function (r) { return !isPending(r) && r.elapsed !== '' && !isNaN(Number(r.elapsed)) && Number(r.elapsed) <= 0; }).sort(function (a, b) { return Number(a.elapsed) - Number(b.elapsed); });
+      return '<h2>' + (x.q ? x.rank + '. ' : 'Not ranked: ') + esc(x.o) + ' (' + l.length + ' answered on time, average ' + f1(x.all.avg) + ' days)</h2>' +
+        '<table><thead><tr><th>Transaction no.</th><th>Class</th><th>Date received</th><th>Deadline</th><th>Date answered</th><th class="r">Elapsed days</th></tr></thead><tbody>' +
+        l.map(function (r) { return '<tr><td>' + esc(r.txn) + '</td><td>' + esc(r.classification) + '</td><td>' + esc(fmtDate(r.dateReceived)) + '</td><td>' + esc(fmtDate(r.dueDate)) + '</td><td>' + esc(fmtDate(r.dateSubmitted)) + '</td><td class="r">' + r.elapsed + '</td></tr>'; }).join('') + '</tbody></table>';
+    }).join('');
+    var html = '<div class="rh"><img alt="" src="' + LOGOS.dpwh + '"><div>Republic of the Philippines<b class="dep">DEPARTMENT OF PUBLIC WORKS AND HIGHWAYS</b><b>REGIONAL OFFICE VIII</b>Government Center, Baras, Palo, Leyte</div><img alt="" src="' + LOGOS.bp + '"></div>' +
+      '<h1>OFFICE RANKING: RFAs ANSWERED ON TIME</h1><p class="sub">Public Affairs and Information Office<br>' + (oSel ? '<b>' + esc(oSel) + '</b><br>' : '') + 'Period: <b>' + esc(period) + '</b><br>Ranked by: <b>' + esc(colName) + '</b> (' + (omSort.dir === 1 ? 'best average first' : 'lowest rank first') + ')' + (omMin > 1 ? '<br>Minimum RFAs answered on time for a rank: <b>' + omMin + '</b>' : '') + '</p>' +
+      '<h2>Ranking</h2>' + officeMatrix(rows, true) +
+      '<h2 style="margin-top:14px">RFAs answered on time, by office</h2><p style="margin:0 0 4px;font-size:9pt">Elapsed days is the date answered minus the deadline. A negative number is days before the deadline. Ranking uses the average of these numbers.</p>' + (detail || '<p>No RFAs answered on time in this period.</p>') +
+      '<div class="sign"><div>Prepared by:<div class="line">' + esc(S.user.name) + '</div>' + esc(S.user.position || S.user.role) + '</div><div>Noted by:<div class="line">&nbsp;</div>&nbsp;</div></div>' +
+      '<div class="rf"><img alt="" src="' + LOGOS.tuv + '"><div>Website: https://www.dpwh.gov.ph<br>Tel. No(s).: (053) 323-1038<br>Generated on ' + esc(fmtDate(S.today)) + ' from the DPWH8 PAIO RFAs Monitoring Tool</div></div>';
+    $('report').innerHTML = html;
+    var oldTitle = document.title;
+    document.title = 'Office ranking - ' + period;
+    document.body.classList.add('printing');
+    var done = function () { document.body.classList.remove('printing'); document.title = oldTitle; window.removeEventListener('afterprint', done); };
+    window.addEventListener('afterprint', done);
+    quiet('logAction', S.token, 'Exported report', 'Office ranking, ' + period);
+    setTimeout(function () { window.print(); }, 250);
+  }
+  $('btnRankPdf').addEventListener('click', printRanking);
 
   /* ----------------------------------- users --------------------------------- */
   var USERS = [];
