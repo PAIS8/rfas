@@ -496,6 +496,9 @@
   var $ = function (id) { return document.getElementById(id); };
   // Version and changelog. Add the newest version at the top when the code changes.
   var CHANGELOG = [
+    { v: '1.8.0', date: '2026-11-17', items: [
+      'Deadline rule changed: the day the complaint is received is Day 1 Saturdays, Sundays and holidays are skipped without a day count, and an RFA received on a weekend or holiday starts counting on the next working day. Example: 5 working days from Mon Nov 9 is Fri Nov 13.',
+      'Every deadline and elapsed day in the Sheet is counted again once (old values saved in the tab "Deadline backup (before 1.8.0)").' ] },
     { v: '1.7.9', date: '2026-11-16', items: [
       'Export PDF report and Export ranking PDF now open the print / Save as PDF screen straight away, so iPhone Safari no longer shows "This website has been blocked from automatically printing".' ] },
     { v: '1.7.8', date: '2026-11-13', items: [
@@ -586,7 +589,8 @@
   function ymd(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
   function workday(startYmd, days) {
     var d = parseYmd(startYmd); if (!d) return '';
-    var left = Math.max(0, Math.round(Number(days) || 0));
+    d.setDate(d.getDate() - 1);   // day of receipt is day 1; a weekend or holiday receipt starts on the next working day
+    var left = Math.max(1, Math.round(Number(days) || 0));
     while (left > 0) { d.setDate(d.getDate() + 1); var w = d.getDay(); if (w !== 0 && w !== 6 && S.holidays.indexOf(ymd(d)) < 0) left--; }
     return ymd(d);
   }
@@ -700,7 +704,7 @@
     $('loginErr').textContent = msg || '';
   }
   // The screen only needs a script that is at least this version. A newer or slightly older script is fine.
-  var NEED_SERVER = '1.7.0';
+  var NEED_SERVER = '1.8.0';
   function verNum(v) { var p = String(v || '0').split('.'); return (+p[0] || 0) * 1000000 + (+p[1] || 0) * 1000 + (+p[2] || 0); }
   function versionCheck(sv) {
     var b = $('verWarn');
