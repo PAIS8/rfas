@@ -496,6 +496,8 @@
   var $ = function (id) { return document.getElementById(id); };
   // Version and changelog. Add the newest version at the top when the code changes.
   var CHANGELOG = [
+    { v: '1.7.9', date: '2026-11-16', items: [
+      'Export PDF report and Export ranking PDF now open the print / Save as PDF screen straight away, so iPhone Safari no longer shows "This website has been blocked from automatically printing".' ] },
     { v: '1.7.8', date: '2026-11-13', items: [
       'A Date answered earlier than Date received is now flagged: the two cells turn red in the Sheet, the RFA shows "check dates" in the app, and it is left out of the ranking (with a note listing it) until the date is corrected.' ] },
     { v: '1.7.7', date: '2026-11-13', items: [
@@ -1362,7 +1364,7 @@
     var done = function () { document.body.classList.remove('printing'); document.title = oldTitle; window.removeEventListener('afterprint', done); };
     window.addEventListener('afterprint', done);
     quiet('logAction', S.token, 'Exported report', period);
-    setTimeout(function () { window.print(); }, 250);
+    window.print();   // straight from the tap: iPhone Safari blocks a delayed print
   }
 
   /* ------------------------- PDF: office ranking with transaction numbers ------------------------- */
@@ -1393,7 +1395,7 @@
     var done = function () { document.body.classList.remove('printing'); document.title = oldTitle; window.removeEventListener('afterprint', done); };
     window.addEventListener('afterprint', done);
     quiet('logAction', S.token, 'Exported report', 'Office ranking, ' + period);
-    setTimeout(function () { window.print(); }, 250);
+    window.print();   // straight from the tap: iPhone Safari blocks a delayed print
   }
   $('btnRankPdf').addEventListener('click', printRanking);
 
