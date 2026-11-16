@@ -496,9 +496,10 @@
   var $ = function (id) { return document.getElementById(id); };
   // Version and changelog. Add the newest version at the top when the code changes.
   var CHANGELOG = [
+    { v: '1.8.1', date: '2026-11-17', items: [ 'The one-time deadline recount no longer creates a "Deadline backup" tab.' ] },
     { v: '1.8.0', date: '2026-11-17', items: [
       'Deadline rule changed: the day the complaint is received is Day 1 Saturdays, Sundays and holidays are skipped without a day count, and an RFA received on a weekend or holiday starts counting on the next working day. Example: 5 working days from Mon Nov 9 is Fri Nov 13.',
-      'Every deadline and elapsed day in the Sheet is counted again once (old values saved in the tab "Deadline backup (before 1.8.0)").' ] },
+      'Every deadline and elapsed day in the Sheet is counted again once (no backup tab is made).' ] },
     { v: '1.7.9', date: '2026-11-16', items: [
       'Export PDF report and Export ranking PDF now open the print / Save as PDF screen straight away, so iPhone Safari no longer shows "This website has been blocked from automatically printing".' ] },
     { v: '1.7.8', date: '2026-11-13', items: [
