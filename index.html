@@ -496,6 +496,9 @@
   var $ = function (id) { return document.getElementById(id); };
   // Version and changelog. Add the newest version at the top when the code changes.
   var CHANGELOG = [
+    { v: '1.9.0', date: '2026-11-23', items: [
+      'Referred to now has a dropdown list in the Sheet (new "Referred to" column in the Lists tab) and in the New RFA / Edit form. A new name can still be typed.',
+      'The names already typed in Referred to are corrected once to the names in that list (typos, missing middle initials and prefixes). DE and OIC DE are kept as typed; entries naming two people or with a note are not changed.' ] },
     { v: '1.8.2', date: '2026-11-17', items: [
       'No. of elapsed days now counts working days only (Saturdays, Sundays and holidays are not counted), between the due date and the date submitted. Negative = working days before the deadline, positive = working days late. Every elapsed day is counted again once.',
       'Sheet: Other Remarks (column M) is free text for every staff member: any list or lock on it is cleared the next time the setup runs.' ] },
@@ -1064,7 +1067,7 @@
       '<label class="f">Elapsed days <span class="opt">(computed)</span>' + inp('rfEl', '', 'text', 'readonly tabindex="-1"') + '</label>' +
       '<label class="f w2">Other remarks' + inp('rfRemarks', r.remarks || '') + '</label>' +
       '<label class="f">Encoded by <span class="opt">(automatic)</span>' + inp('rfEnc', isNew ? S.user.name + (S.user.position ? ', ' + S.user.position : '') : encoder(r), 'text', 'readonly tabindex="-1"') + '</label>' +
-      '</div><datalist id="refList">' + uniq('referredTo').slice(0, 200).map(function (v) { return '<option value="' + esc(v) + '">'; }).join('') + '</datalist></div>' +
+      '</div><datalist id="refList">' + ((S.lists.referred || []).concat(uniq('referredTo').filter(function (v) { return (S.lists.referred || []).indexOf(v) < 0; }))).slice(0, 300).map(function (v) { return '<option value="' + esc(v) + '">'; }).join('') + '</datalist></div>' +
       '<footer><button type="button" class="btn" data-close>Cancel</button><button class="btn primary" id="rfSave">' + (isNew ? 'Save RFA' : 'Save changes') + '</button></footer></form>');
     var g = function (id) { return o.el.querySelector('#' + id); };
     function suggestDays() {
