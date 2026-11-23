@@ -496,6 +496,8 @@
   var $ = function (id) { return document.getElementById(id); };
   // Version and changelog. Add the newest version at the top when the code changes.
   var CHANGELOG = [
+    { v: '1.9.2', date: '2026-11-23', items: [ 'A name typed under "Others:" in Referred to is added to the list when the RFA is saved, so it shows in the dropdown (app and Sheet) from then on.' ] },
+    { v: '1.9.1', date: '2026-11-23', items: [ 'Referred to is now a real dropdown in the New RFA / Edit form (like Platform), with "Others:" to type a name that is not on the list.' ] },
     { v: '1.9.0', date: '2026-11-23', items: [
       'Referred to now has a dropdown list in the Sheet (new "Referred to" column in the Lists tab) and in the New RFA / Edit form. A new name can still be typed.',
       'The names already typed in Referred to are corrected once to the names in that list (typos, missing middle initials and prefixes). DE and OIC DE are kept as typed; entries naming two people or with a note are not changed.' ] },
@@ -1058,7 +1060,7 @@
       '<label class="f">With extension?' + sel('rfExt', ['No', 'Yes'], r.extension || 'No') + '</label>' +
       '<label class="f">No. of working days' + inp('rfDays', r.days, 'number', 'min="0" max="365"') + '</label>' +
       '<label class="f">Office' + sel('rfOffice', S.lists.offices, r.office, true) + '</label>' +
-      '<label class="f">Referred to' + inp('rfRef', r.referredTo || '', 'text', 'list="refList"') + '</label>' +
+      '<label class="f">Referred to' + selOther('rfRef', S.lists.referred || [], r.referredTo, 'Type the name') + '</label>' +
       '<label class="f">Due date / deadline <span class="opt">(computed)</span>' + inp('rfDue', '', 'text', 'readonly tabindex="-1"') + '</label>' +
       '<div class="sect">Action and status</div>' +
       '<label class="f w3">Action taken<textarea class="in" id="rfAction" rows="4">' + esc(r.action || '') + '</textarea></label>' +
@@ -1067,7 +1069,7 @@
       '<label class="f">Elapsed days <span class="opt">(computed)</span>' + inp('rfEl', '', 'text', 'readonly tabindex="-1"') + '</label>' +
       '<label class="f w2">Other remarks' + inp('rfRemarks', r.remarks || '') + '</label>' +
       '<label class="f">Encoded by <span class="opt">(automatic)</span>' + inp('rfEnc', isNew ? S.user.name + (S.user.position ? ', ' + S.user.position : '') : encoder(r), 'text', 'readonly tabindex="-1"') + '</label>' +
-      '</div><datalist id="refList">' + ((S.lists.referred || []).concat(uniq('referredTo').filter(function (v) { return (S.lists.referred || []).indexOf(v) < 0; }))).slice(0, 300).map(function (v) { return '<option value="' + esc(v) + '">'; }).join('') + '</datalist></div>' +
+      '</div></div>' +
       '<footer><button type="button" class="btn" data-close>Cancel</button><button class="btn primary" id="rfSave">' + (isNew ? 'Save RFA' : 'Save changes') + '</button></footer></form>');
     var g = function (id) { return o.el.querySelector('#' + id); };
     function suggestDays() {
@@ -1082,7 +1084,7 @@
       g('rfEl').value = d === null ? '' : (d <= 0 ? Math.abs(d) + ' day(s) early or on time' : d + ' day(s) late');
     }
     var pick = function (id) { return g(id).value === OTHERS ? g(id + 'Other').value.trim() : g(id).value; };
-    ['rfPlatform', 'rfNature'].forEach(function (id) {
+    ['rfPlatform', 'rfNature', 'rfRef'].forEach(function (id) {
       g(id).addEventListener('change', function () {
         var on = g(id).value === OTHERS; g(id + 'Other').classList.toggle('hidden', !on); if (on) g(id + 'Other').focus();
       });
@@ -1096,11 +1098,12 @@
       var rec = {
         row: isNew ? 0 : r.row, originalTxn: isNew ? '' : r.txn, dateReceived: g('rfDate').value, txn: g('rfTxn').value.trim(), platform: pick('rfPlatform'),
         sender: g('rfSender').value.trim(), nature: pick('rfNature'), concern: g('rfConcern').value.trim(), classification: g('rfClass').value,
-        extension: g('rfExt').value, days: g('rfDays').value, office: g('rfOffice').value, referredTo: g('rfRef').value.trim(), action: g('rfAction').value.trim(),
+        extension: g('rfExt').value, days: g('rfDays').value, office: g('rfOffice').value, referredTo: pick('rfRef'), action: g('rfAction').value.trim(),
         status: g('rfStatus').value, dateSubmitted: g('rfSub').value, remarks: g('rfRemarks').value.trim()
       };
       var miss = !rec.dateReceived ? 'the date received' : !rec.txn ? 'the transaction number' : !rec.sender ? 'the sender' : !rec.classification ? 'the classification' : '';
       if (!miss && g('rfPlatform').value === OTHERS && !rec.platform) miss = 'the platform in the box beside "Others:"';
+      if (!miss && g('rfRef').value === OTHERS && !rec.referredTo) miss = 'the name in the box beside "Others:"';
       if (!miss && g('rfNature').value === OTHERS && !rec.nature) miss = 'the nature of complaint in the box beside "Others:"';
       if (miss) { g('rfErr').textContent = 'Please enter ' + miss + '.'; o.el.scrollTop = 0; return; }
       if (rec.status.toLowerCase().indexOf('closed') >= 0 && !rec.dateSubmitted) { g('rfErr').textContent = 'Please enter the date submitted before closing this RFA.'; o.el.scrollTop = 0; return; }
