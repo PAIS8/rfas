@@ -496,6 +496,7 @@
   var $ = function (id) { return document.getElementById(id); };
   // Version and changelog. Add the newest version at the top when the code changes.
   var CHANGELOG = [
+    { v: '1.9.8', date: '2026-11-24', items: [ 'Activity log: the Information Officer II now sees everyone with an account in the user dropdown too (before, only the Administrator did).' ] },
     { v: '1.9.7', date: '2026-11-24', items: [ 'Activity log: choosing a user in the dropdown now also shows the entries that name that person in the details (for example Encoded By typed in the Sheet), not only entries made under their own login.' ] },
     { v: '1.9.6', date: '2026-11-24', items: [ 'Activity log: the user dropdown now lists everyone who has an account (Administrator view), even people who have not signed in to the app and only edit the Sheet.' ] },
     { v: '1.9.5', date: '2026-11-24', items: [ 'Users: new optional "Google email". When that person edits the Google Sheet, the Activity log shows their name (so you can search and filter by it), not the email or "Google Sheet".' ] },
@@ -1271,10 +1272,10 @@
   var LOG = [];
   function loadLog() {
     // The user list also holds everyone with an account, so a person who has not signed in yet (only edits the Sheet) can still be picked.
-    var pu = can('users') ? api('getUsers', S.token).catch(function () { return []; }) : Promise.resolve([]);
+    var pu = api('getLogUsers', S.token).catch(function () { return []; });
     Promise.all([api('getLog', S.token), pu]).then(function (res) {
       LOG = res[0] || []; var names = [];
-      (res[1] || []).forEach(function (u) { if (u.name && names.indexOf(u.name) < 0) names.push(u.name); });
+      (res[1] || []).forEach(function (n) { if (n && names.indexOf(n) < 0) names.push(n); });
       LOG.forEach(function (l) { if (l.name && names.indexOf(l.name) < 0) names.push(l.name); });
       opts($('logUser'), 'All users', names, true); renderLog();
     }).catch(function (e) { toast(e.message); });
