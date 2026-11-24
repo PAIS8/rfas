@@ -496,6 +496,7 @@
   var $ = function (id) { return document.getElementById(id); };
   // Version and changelog. Add the newest version at the top when the code changes.
   var CHANGELOG = [
+    { v: '1.9.5', date: '2026-11-24', items: [ 'Users: new optional "Google email". When that person edits the Google Sheet, the Activity log shows their name (so you can search and filter by it), not the email or "Google Sheet".' ] },
     { v: '1.9.4', date: '2026-11-23', items: [ 'Sheet: new column "Locked tab editors" in the Lists tab. Type the Google email of anyone who should also edit the locked tabs (Lists, Users, Log, Holidays, Bulletin); the owner and the script account keep access too.' ] },
     { v: '1.9.3', date: '2026-11-23', items: [ 'Sheet: when the Sheet has a different owner than the account that runs the script, both stay editors of the owner-only tabs (Lists, Users, Log and so on).' ] },
     { v: '1.9.2', date: '2026-11-23', items: [ 'A name typed under "Others:" in Referred to is added to the list when the RFA is saved, so it shows in the dropdown (app and Sheet) from then on.' ] },
@@ -1437,6 +1438,7 @@
       '<label class="f">Username<input class="in" id="uName" value="' + esc(u.username) + '" ' + (isNew ? 'required' : 'readonly') + '></label>' +
       '<label class="f">Full name<input class="in" id="uFull" value="' + esc(u.name) + '" required></label>' +
       '<label class="f">Position<input class="in" id="uPos" value="' + esc(u.position || '') + '" placeholder="e.g. Clerk III"></label>' +
+      '<label class="f">Google email <span class="opt">(optional)</span><input class="in" id="uMail" type="email" value="' + esc(u.email || '') + '" placeholder="name@gmail.com"><span class="hint">Lets the Activity log show this person\'s name when they edit the Google Sheet.</span></label>' +
       '<label class="f">Role<select class="in" id="uRole">' + roles.map(function (r) { return '<option' + (r === u.role ? ' selected' : '') + '>' + r + '</option>'; }).join('') + '</select></label>' +
       '<label class="f">' + (isNew ? 'Temporary password' : 'Reset password <span class="opt">(leave blank to keep)</span>') +
       '<input class="in" id="uPw" type="text" autocomplete="off" minlength="8" ' + (isNew ? 'required' : '') + '><span class="hint">The user will be asked to change it at the next sign in.</span></label>' +
@@ -1446,7 +1448,7 @@
     var g = function (id) { return o.el.querySelector('#' + id); };
     g('uForm').addEventListener('submit', function (ev) {
       ev.preventDefault(); g('uSave').disabled = true;
-      api('saveUser', S.token, { isNew: isNew, username: g('uName').value, name: g('uFull').value, role: g('uRole').value, position: g('uPos').value, password: g('uPw').value, active: isNew ? true : g('uActive').checked })
+      api('saveUser', S.token, { isNew: isNew, username: g('uName').value, name: g('uFull').value, role: g('uRole').value, position: g('uPos').value, email: g('uMail').value, password: g('uPw').value, active: isNew ? true : g('uActive').checked })
         .then(function (list) { USERS = list; renderUsers(); o.close(); toast('User saved.'); })
         .catch(function (e) { g('uErr').textContent = e.message; g('uSave').disabled = false; });
     });
