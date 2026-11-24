@@ -496,6 +496,7 @@
   var $ = function (id) { return document.getElementById(id); };
   // Version and changelog. Add the newest version at the top when the code changes.
   var CHANGELOG = [
+    { v: '1.9.7', date: '2026-11-24', items: [ 'Activity log: choosing a user in the dropdown now also shows the entries that name that person in the details (for example Encoded By typed in the Sheet), not only entries made under their own login.' ] },
     { v: '1.9.6', date: '2026-11-24', items: [ 'Activity log: the user dropdown now lists everyone who has an account (Administrator view), even people who have not signed in to the app and only edit the Sheet.' ] },
     { v: '1.9.5', date: '2026-11-24', items: [ 'Users: new optional "Google email". When that person edits the Google Sheet, the Activity log shows their name (so you can search and filter by it), not the email or "Google Sheet".' ] },
     { v: '1.9.4', date: '2026-11-23', items: [ 'Sheet: new column "Locked tab editors" in the Lists tab. Type the Google email of anyone who should also edit the locked tabs (Lists, Users, Log, Holidays, Bulletin); the owner and the script account keep access too.' ] },
@@ -1280,7 +1281,7 @@
   }
   function renderLog() {
     var q = $('logQ').value.trim().toLowerCase(), u = $('logUser').value;
-    var rows = LOG.filter(function (l) { return (!u || l.name === u) && (!q || [l.name, l.action, l.reference, l.details].join(' ').toLowerCase().indexOf(q) >= 0); });
+    var rows = LOG.filter(function (l) { return (!u || l.name === u || String(l.details || '').indexOf(u) >= 0) && (!q || [l.name, l.action, l.reference, l.details].join(' ').toLowerCase().indexOf(q) >= 0); });
     $('logEmpty').classList.toggle('hidden', rows.length > 0);
     var adm = can('users');
     $('logAdmin').classList.toggle('hidden', !adm); $('logAdmin').style.display = adm ? 'flex' : 'none';
